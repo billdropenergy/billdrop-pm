@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BillDrop Energy Intelligence Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8f7f4;
+  --white:#ffffff;
+  --ink:#0d0d0d;
+  --ink2:#2e2e2e;
+  --muted:#7a7a7a;
+  --rule:#e4e2dd;
+  --V:#008f74;
+  --Vl:#e6f7f3;
+  --Vd:#006655;
+  --navy:#1a1a28;
+  --R:#c93050;
+  --A:#c87d00;
+  --Al:#fef6e6;
+  --G:#1a7a4a;
+}
+html{background:var(--bg)}
+body{font-family:'Barlow',sans-serif;color:var(--ink);line-height:1.65;background:var(--bg)}
+
+/* ── LOADING ── */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;z-index:999}
+.ld-logo{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;letter-spacing:.05em;color:var(--navy)}
+.ld-logo span{color:var(--V)}
+.ld-spin{width:36px;height:36px;border-radius:50%;border:3px solid var(--rule);border-top-color:var(--V);animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-txt{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+/* ── REPORT WRAPPER ── */
+#report{display:none;max-width:860px;margin:0 auto;padding:0 0 4rem}
+
+/* ── PRINT ── */
+@media print{
+  body{background:#fff}
+  #report{max-width:100%;padding:0}
+  .no-print{display:none!important}
+  .page-break{page-break-before:always}
+  .section{page-break-inside:avoid}
+}
+
+/* ── COVER ── */
+.cover{
+  background:var(--navy);
+  color:#fff;
+  padding:4rem 3rem 3.5rem;
+  position:relative;
+  overflow:hidden;
+  min-height:340px;
+}
+.cover::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:320px;height:320px;border-radius:50%;
+  background:rgba(0,143,116,.12);
+}
+.cover::after{
+  content:'';position:absolute;bottom:-40px;left:-40px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(0,143,116,.08);
+}
+.cover-eyebrow{
+  font-family:'Share Tech Mono',monospace;
+  font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(0,212,170,.7);margin-bottom:1.5rem;
+}
+.cover-logo{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.3rem;font-weight:900;letter-spacing:.05em;
+  color:rgba(255,255,255,.5);margin-bottom:2.5rem;
+  text-transform:uppercase;
+}
+.cover-logo span{color:#00d4aa}
+.cover-label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.4);margin-bottom:.5rem;
+}
+.cover-name{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(2.4rem,6vw,4rem);font-weight:900;
+  line-height:.95;letter-spacing:.01em;
+  color:#fff;margin-bottom:1rem;
+}
+.cover-meta{
+  display:flex;gap:2rem;flex-wrap:wrap;margin-top:1.8rem;
+}
+.cover-meta-item{
+  font-size:.78rem;color:rgba(255,255,255,.55);
+  line-height:1.5;
+}
+.cover-meta-item strong{color:rgba(255,255,255,.9);display:block;font-size:.85rem}
+.cover-badge{
+  position:absolute;bottom:2.5rem;right:2.5rem;
+  background:var(--V);color:#fff;
+  font-family:'Share Tech Mono',monospace;
+  font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:.5rem 1rem;border-radius:6px;
+}
+
+/* ── SECTIONS ── */
+.section{padding:2.5rem 3rem;border-bottom:1px solid var(--rule)}
+.section:last-of-type{border-bottom:none}
+.sec-ey{
+  font-family:'Share Tech Mono',monospace;
+  font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--V);margin-bottom:.65rem;
+  display:flex;align-items:center;gap:.5rem;
+}
+.sec-ey::before{content:'//'}
+.sec-h{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(1.5rem,4vw,2.2rem);font-weight:900;
+  text-transform:uppercase;letter-spacing:.02em;
+  color:var(--navy);margin-bottom:.5rem;line-height:.97;
+}
+.sec-sub{font-size:.85rem;color:var(--muted);line-height:1.65;margin-bottom:1.6rem;max-width:580px}
+
+/* ── EXECUTIVE SUMMARY ── */
+.exec-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:.8rem;margin-bottom:1.8rem;
+}
+.exec-card{
+  background:var(--white);
+  border:1.5px solid var(--rule);
+  border-radius:12px;
+  padding:1.2rem;
+  position:relative;overflow:hidden;
+}
+.exec-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.ec-green::before{background:var(--V)}
+.ec-red::before{background:var(--R)}
+.ec-amber::before{background:var(--A)}
+.ec-navy::before{background:var(--navy)}
+.exec-card-lbl{
+  font-family:'Share Tech Mono',monospace;
+  font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:.4rem;
+}
+.exec-card-val{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2rem;font-weight:900;line-height:1;
+  color:var(--navy);margin-bottom:.2rem;
+}
+.ec-red .exec-card-val{color:var(--R)}
+.ec-green .exec-card-val{color:var(--V)}
+.ec-amber .exec-card-val{color:var(--A)}
+.exec-card-sub{font-size:.72rem;color:var(--muted);line-height:1.4}
+
+/* ── SCORE RING ── */
+.score-row{display:flex;align-items:center;gap:2rem;margin-bottom:1.6rem;flex-wrap:wrap}
+.score-ring-wrap{flex-shrink:0;text-align:center}
+.score-ring-label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-top:.5rem;
+}
+.score-context{flex:1;min-width:200px}
+.score-context p{font-size:.85rem;color:var(--ink2);line-height:1.7;margin-bottom:.7rem}
+.score-pills{display:flex;gap:.5rem;flex-wrap:wrap}
+.score-pill{
+  font-family:'Share Tech Mono',monospace;
+  font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:.28rem .7rem;border-radius:100px;
+  border:1px solid;
+}
+.pill-green{color:var(--V);border-color:rgba(0,143,116,.3);background:var(--Vl)}
+.pill-red{color:var(--R);border-color:rgba(201,48,80,.2);background:#fdf0f3}
+.pill-amber{color:var(--A);border-color:rgba(200,125,0,.2);background:var(--Al)}
+
+/* ── BREAKDOWN TABLE ── */
+.breakdown-table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+.breakdown-table th{
+  text-align:left;padding:.5rem .8rem;
+  font-family:'Share Tech Mono',monospace;
+  font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);border-bottom:2px solid var(--rule);
+}
+.breakdown-table td{padding:.65rem .8rem;border-bottom:1px solid var(--rule);font-size:.85rem}
+.breakdown-table tr:last-child td{border-bottom:none}
+.breakdown-table tr:hover td{background:var(--Vl)}
+.bar-cell{width:140px}
+.bar-bg{height:7px;background:var(--rule);border-radius:100px;overflow:hidden}
+.bar-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--V),var(--Vd))}
+
+/* ── LEAKS ── */
+.leak-list{display:flex;flex-direction:column;gap:.8rem;margin-bottom:1.2rem}
+.leak-item{
+  background:var(--white);
+  border:1.5px solid var(--rule);
+  border-radius:10px;
+  padding:1rem 1.2rem;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:1rem;align-items:center;
+}
+.leak-rank{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--navy);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:800;font-size:1rem;flex-shrink:0;
+}
+.leak-body{}
+.leak-name{font-weight:700;font-size:.92rem;color:var(--navy);margin-bottom:.18rem}
+.leak-desc{font-size:.78rem;color:var(--muted);line-height:1.5}
+.leak-val{text-align:right;flex-shrink:0}
+.leak-monthly{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.5rem;font-weight:900;color:var(--R);line-height:1;
+}
+.leak-period{font-size:.65rem;color:var(--muted);font-family:'Share Tech Mono',monospace;letter-spacing:.06em}
+
+/* ── TREND CHART ── */
+.chart-wrap{background:var(--white);border:1.5px solid var(--rule);border-radius:12px;padding:1.4rem;margin-bottom:1rem}
+.chart-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--navy);margin-bottom:1.2rem}
+.chart-svg-wrap{overflow-x:auto}
+
+/* ── REBATES ── */
+.rebate-list{display:flex;flex-direction:column;gap:.65rem;margin-bottom:1.2rem}
+.rebate-item{
+  background:var(--white);
+  border:1.5px solid var(--rule);
+  border-left:3px solid var(--V);
+  border-radius:0 10px 10px 0;
+  padding:.9rem 1.1rem;
+  display:flex;justify-content:space-between;align-items:center;gap:1rem;
+}
+.rebate-item.maybe{border-left-color:var(--A)}
+.rebate-name{font-weight:600;font-size:.88rem;color:var(--navy)}
+.rebate-desc{font-size:.73rem;color:var(--muted);margin-top:.1rem;line-height:1.4}
+.rebate-amt{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.3rem;font-weight:900;color:var(--V);
+  white-space:nowrap;flex-shrink:0;
+}
+.rebate-item.maybe .rebate-amt{color:var(--A)}
+
+/* ── FORECAST TABLE ── */
+.forecast-wrap{overflow-x:auto;margin-bottom:1.2rem}
+.forecast-table{width:100%;border-collapse:collapse;min-width:480px}
+.forecast-table th{
+  padding:.6rem .9rem;
+  font-family:'Share Tech Mono',monospace;
+  font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);border-bottom:2px solid var(--rule);
+  text-align:center;
+}
+.forecast-table th:first-child{text-align:left}
+.forecast-table td{padding:.7rem .9rem;border-bottom:1px solid var(--rule);font-size:.85rem;text-align:center}
+.forecast-table td:first-child{text-align:left;font-weight:600;color:var(--navy)}
+.forecast-table tr:last-child td{border-bottom:none;font-weight:700}
+.forecast-table .highlight{background:var(--Vl)}
+.ft-val{color:var(--V);font-weight:700}
+
+/* ── NEXT STEPS ── */
+.steps-list{display:flex;flex-direction:column;gap:.8rem;margin-bottom:1.4rem}
+.step-item{
+  display:flex;align-items:flex-start;gap:1rem;
+  background:var(--white);
+  border:1.5px solid var(--rule);
+  border-radius:10px;
+  padding:1rem 1.2rem;
+}
+.step-num{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--V);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1rem;font-weight:800;flex-shrink:0;margin-top:1px;
+}
+.step-content{}
+.step-title{font-weight:700;font-size:.92rem;color:var(--navy);margin-bottom:.2rem}
+.step-desc{font-size:.8rem;color:var(--muted);line-height:1.55}
+.step-tag{
+  display:inline-block;
+  margin-top:.4rem;
+  font-family:'Share Tech Mono',monospace;
+  font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:.18rem .55rem;border-radius:100px;
+}
+.tag-free{background:var(--Vl);color:var(--V);border:1px solid rgba(0,143,116,.2)}
+.tag-paid{background:var(--Al);color:var(--A);border:1px solid rgba(200,125,0,.2)}
+.tag-quick{background:#f0f0fa;color:var(--navy);border:1px solid rgba(26,26,40,.15)}
+
+/* ── GUARANTEE ── */
+.guarantee-bar{
+  background:var(--navy);
+  color:#fff;
+  padding:2rem 3rem;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:2rem;flex-wrap:wrap;
+}
+.gtee-text{}
+.gtee-label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(0,212,170,.7);margin-bottom:.4rem;
+}
+.gtee-h{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.6rem;font-weight:900;color:#fff;
+  letter-spacing:.02em;line-height:1;margin-bottom:.3rem;
+}
+.gtee-sub{font-size:.82rem;color:rgba(255,255,255,.55);line-height:1.6;max-width:420px}
+.gtee-sig{text-align:right;flex-shrink:0}
+.gtee-sig-name{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:#fff}
+.gtee-sig-title{font-size:.72rem;color:rgba(255,255,255,.45);margin-top:.1rem}
+.gtee-sig-email{font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--V);margin-top:.2rem}
+
+/* ── PRINT / ACTION BAR ── */
+.action-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--white);
+  border-top:1px solid var(--rule);
+  padding:.9rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;z-index:50;
+  box-shadow:0 -4px 20px rgba(0,0,0,.08);
+}
+.ab-left{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ab-right{display:flex;gap:.7rem}
+.ab-btn{
+  padding:.6rem 1.4rem;border-radius:8px;
+  font-family:'Barlow',sans-serif;font-size:.8rem;font-weight:700;
+  cursor:pointer;border:1.5px solid;transition:all .18s;
+}
+.ab-print{background:var(--V);color:#fff;border-color:var(--V)}
+.ab-print:hover{background:var(--Vd)}
+.ab-back{background:transparent;color:var(--muted);border-color:var(--rule)}
+.ab-back:hover{border-color:var(--ink2);color:var(--ink2)}
+
+/* ── DISCLAIMER ── */
+.disclaimer{padding:1.5rem 3rem;font-size:.7rem;color:var(--muted);line-height:1.7;border-top:1px solid var(--rule)}
+
+@media(max-width:600px){
+  .cover{padding:2.5rem 1.6rem 2rem}
+  .section{padding:2rem 1.6rem}
+  .guarantee-bar{padding:1.8rem 1.6rem}
+  .leak-item{grid-template-columns:auto 1fr;grid-template-rows:auto auto}
+  .leak-val{grid-column:2}
+  .disclaimer{padding:1.5rem 1.6rem}
+  .action-bar{padding:.8rem 1.2rem}
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="ld-logo">Bill<span>Drop</span></div>
+  <div class="ld-spin"></div>
+  <div class="ld-txt">Building your report…</div>
+</div>
+
+<!-- Report -->
+<div id="report">
+
+  <!-- ── COVER ── -->
+  <div class="cover" id="r-cover">
+    <div class="cover-logo">Bill<span>Drop</span> Energy</div>
+    <div class="cover-eyebrow">Energy Intelligence Report · Confidential</div>
+    <div class="cover-label">Prepared for</div>
+    <div class="cover-name" id="r-cover-name">Loading…</div>
+    <div class="cover-meta" id="r-cover-meta"></div>
+    <div class="cover-badge" id="r-cover-date"></div>
+  </div>
+
+  <!-- ── EXECUTIVE SUMMARY ── -->
+  <div class="section">
+    <div class="sec-ey">Executive Summary</div>
+    <h2 class="sec-h">What We Found</h2>
+    <p class="sec-sub" id="r-exec-sub">Loading…</p>
+    <div class="exec-grid" id="r-exec-grid"></div>
+    <div class="score-row">
+      <div class="score-ring-wrap">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle cx="55" cy="55" r="46" fill="none" stroke="#e4e2dd" stroke-width="8"/>
+          <circle id="r-score-arc" cx="55" cy="55" r="46" fill="none" stroke="#008f74" stroke-width="8"
+            stroke-dasharray="289" stroke-dashoffset="289"
+            stroke-linecap="round" transform="rotate(-90 55 55)"/>
+          <text id="r-score-num" x="55" y="60" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-size="26" font-weight="900" fill="#1a1a28">—</text>
+        </svg>
+        <div class="score-ring-label">Energy Score</div>
+      </div>
+      <div class="score-context">
+        <p id="r-score-context">Loading…</p>
+        <div class="score-pills" id="r-score-pills"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ENERGY BREAKDOWN ── -->
+  <div class="section">
+    <div class="sec-ey">Energy Allocation</div>
+    <h2 class="sec-h">Where Your Bill Goes</h2>
+    <p class="sec-sub">Industry-standard breakdown for your restaurant type — the starting point for identifying which systems to target first.</p>
+    <table class="breakdown-table" id="r-breakdown-table">
+      <thead><tr><th>System</th><th>% of Bill</th><th>Est. Monthly Cost</th><th>Benchmark</th><th style="width:140px">Visual</th></tr></thead>
+      <tbody id="r-breakdown-body"></tbody>
+    </table>
+  </div>
+
+  <!-- ── COST LEAKS ── -->
+  <div class="section">
+    <div class="sec-ey">Cost Recovery Opportunities</div>
+    <h2 class="sec-h">Profit Left on the Table</h2>
+    <p class="sec-sub" id="r-leaks-sub">Loading…</p>
+    <div class="leak-list" id="r-leaks-list"></div>
+  </div>
+
+  <!-- ── MONTHLY TREND ── -->
+  <div class="section" id="r-trend-section" style="display:none">
+    <div class="sec-ey">Usage Trend</div>
+    <h2 class="sec-h">12-Month Energy History</h2>
+    <p class="sec-sub">Monthly electricity consumption based on your logged utility data. Peaks signal demand charge exposure and seasonal inefficiencies.</p>
+    <div class="chart-wrap">
+      <div class="chart-title">Monthly kWh Usage</div>
+      <div class="chart-svg-wrap">
+        <svg id="r-trend-chart" height="180" style="min-width:100%;display:block"></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REBATES ── -->
+  <div class="section">
+    <div class="sec-ey">Xcel Energy Business Solutions</div>
+    <h2 class="sec-h">Rebates You Likely Qualify For</h2>
+    <p class="sec-sub" id="r-rebates-sub">Loading…</p>
+    <div class="rebate-list" id="r-rebates-list"></div>
+    <p style="font-size:.73rem;color:var(--muted);line-height:1.6">* Rebate amounts are estimates based on current Xcel Business Solutions program rates. Final amounts depend on equipment specifications and program availability at time of application. BillDrop manages the complete submission process on your behalf.</p>
+  </div>
+
+  <!-- ── SAVINGS FORECAST ── -->
+  <div class="section">
+    <div class="sec-ey">Recovery Scenarios</div>
+    <h2 class="sec-h">Your Savings Forecast</h2>
+    <p class="sec-sub">Three scenarios based on implementation depth. All figures are conservative — actual results depend on execution timeline and equipment condition.</p>
+    <div class="forecast-wrap">
+      <table class="forecast-table" id="r-forecast-table">
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Month 1</th>
+            <th>Month 3</th>
+            <th>Month 6</th>
+            <th>Year 1</th>
+          </tr>
+        </thead>
+        <tbody id="r-forecast-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── NEXT STEPS ── -->
+  <div class="section">
+    <div class="sec-ey">Action Plan</div>
+    <h2 class="sec-h">What Happens Next</h2>
+    <p class="sec-sub">Ranked by impact and ease. We recommend starting with Tier 1 — zero capital required, maximum immediate return.</p>
+    <div class="steps-list" id="r-steps-list"></div>
+  </div>
+
+  <!-- ── GUARANTEE ── -->
+  <div class="guarantee-bar">
+    <div class="gtee-text">
+      <div class="gtee-label">BillDrop Guarantee</div>
+      <div class="gtee-h">No Savings — No Charge</div>
+      <div class="gtee-sub">If the identified opportunities in this report don't represent at least $1,500/year in recoverable savings for your business, you pay nothing. This report is backed by that promise.</div>
+    </div>
+    <div class="gtee-sig">
+      <div class="gtee-sig-name">Kahlil</div>
+      <div class="gtee-sig-title">BillDrop Energy · Denver, CO</div>
+      <div class="gtee-sig-email">billdrop.energy@gmail.com</div>
+    </div>
+  </div>
+
+  <!-- ── DISCLAIMER ── -->
+  <div class="disclaimer">
+    This Energy Intelligence Report is prepared by BillDrop Energy for the exclusive use of the named recipient. Benchmark data sourced from the U.S. EIA Commercial Buildings Energy Consumption Survey (CBECS), EPA ENERGY STAR Portfolio Manager, and Xcel Energy Business Solutions program documentation. Savings estimates are projections based on industry averages and property-specific data — actual results may vary. Rebate eligibility subject to current program availability and equipment specifications. Report prepared: <span id="r-disclaimer-date"></span>.
+  </div>
+
+</div><!-- /report -->
+
+<!-- Action Bar -->
+<div class="action-bar no-print">
+  <div class="ab-left" id="ab-name">BillDrop Energy Intelligence Report</div>
+  <div class="ab-right">
+    <button class="ab-btn ab-back" onclick="window.close()">← Close</button>
+    <button class="ab-btn ab-print" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://bqhlyikmwcwdadtltmdz.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxaGx5aWttd2N3ZGFkdGx0bWR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTM3NjIsImV4cCI6MjA5MzE2OTc2Mn0.xl-Jt6BIJ3pKaTxnWbP4sewr5TioD0-G-bgQ0OW9ErU';
+
+const BENCHMARKS = {
+  restaurant:{label:'Restaurant (Full Service)',avg:38.4,best:22.0,worst:65.0,breakdown:{HVAC:42,Refrigeration:22,Cooking:16,Lighting:13,Other:7}},
+  fastfood:{label:'Fast Food / QSR',avg:56.2,best:32.0,worst:90.0,breakdown:{Cooking:35,HVAC:28,Refrigeration:18,Lighting:12,Other:7}},
+  cafe:{label:'Café / Coffee Shop',avg:28.1,best:16.0,worst:50.0,breakdown:{Refrigeration:30,HVAC:30,Brewing:18,Lighting:14,Other:8}},
+  gym:{label:'Gym / Fitness Center',avg:22.3,best:12.0,worst:40.0,breakdown:{HVAC:55,Lighting:22,Equipment:13,HotWater:7,Other:3}},
+  retail:{label:'Retail Store',avg:14.2,best:8.0,worst:28.0,breakdown:{Lighting:42,HVAC:38,Refrigeration:10,Other:10}},
+  medical:{label:'Medical Office',avg:25.8,best:14.0,worst:44.0,breakdown:{HVAC:48,Lighting:24,Equipment:18,Other:10}},
+  other:{label:'Other Business',avg:22.0,best:12.0,worst:40.0,breakdown:{HVAC:40,Lighting:30,Other:30}}
+};
+
+async function loadFromSupabase(key){
+  try{
+    const table = key.startsWith('vpm_energy_') ? 'energy_logs' : 'properties';
+    const r = await fetch(SB_URL+'/rest/v1/'+table+'?key=eq.'+encodeURIComponent(key)+'&select=data',{
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    const rows = await r.json();
+    if(rows && rows.length > 0) return rows[0].data;
+    return null;
+  }catch(e){return null;}
+}
+
+function getParam(name){
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+function fmt$(n){return '$'+Math.round(n).toLocaleString()}
+function fmtK(n){return Math.round(n).toLocaleString()}
+
+async function buildReport(){
+  const propId = getParam('propId');
+  if(!propId){
+    document.getElementById('loading').innerHTML = '<div style="font-family:\'Barlow\',sans-serif;color:#666;text-align:center;padding:2rem"><strong>No report data.</strong><br>Open this from the Portfolio Manager.</div>';
+    return;
+  }
+
+  // Load report payload from Supabase
+  const payload = await loadFromSupabase('vpm_report_'+propId);
+  if(!payload){
+    document.getElementById('loading').innerHTML = '<div style="font-family:\'Barlow\',sans-serif;color:#666;text-align:center;padding:2rem"><strong>Report data not found.</strong><br>Generate the report from the Portfolio Manager first.</div>';
+    return;
+  }
+
+  const {prop, entries} = payload;
+  const bm = BENCHMARKS[prop.type] || BENCHMARKS.restaurant;
+
+  // ── Calculations ──
+  const avgCost = entries.length
+    ? entries.reduce((s,e)=>s+e.cost,0)/entries.length
+    : (prop.avgBill || 0);
+  const avgKwh = entries.length
+    ? entries.reduce((s,e)=>s+e.kwh,0)/entries.length
+    : (prop.avgBill ? prop.avgBill/0.13 : 0);
+  const annualKwh = avgKwh * 12;
+  const intensity = prop.sqft > 0 ? annualKwh / prop.sqft : 0;
+  const overPct = intensity > 0 ? Math.round((intensity - bm.avg) / bm.avg * 100) : 0;
+  const monthlyWaste = avgCost > 0 ? Math.max(0, Math.round((Math.max(0,overPct)/100) * avgCost)) : Math.round(avgCost * 0.22);
+  const annualWaste = monthlyWaste * 12;
+  const score = intensity > 0
+    ? Math.max(1, Math.min(100, Math.round(100 - (intensity - bm.best)/(bm.worst - bm.best)*100)))
+    : 0;
+  const scoreColor = score >= 70 ? '#008f74' : score >= 45 ? '#c87d00' : '#c93050';
+
+  // ── Cover ──
+  document.getElementById('r-cover-name').textContent = prop.name;
+  const date = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('r-cover-date').textContent = date;
+  document.getElementById('r-disclaimer-date').textContent = date;
+  document.getElementById('ab-name').textContent = prop.name + ' · Energy Intelligence Report';
+  document.title = 'BillDrop Report — ' + prop.name;
+  document.getElementById('r-cover-meta').innerHTML = [
+    prop.address ? `<div class="cover-meta-item"><strong>${prop.address}</strong>Address</div>` : '',
+    prop.sqft ? `<div class="cover-meta-item"><strong>${prop.sqft.toLocaleString()} sq ft</strong>Building Size</div>` : '',
+    avgCost ? `<div class="cover-meta-item"><strong>${fmt$(avgCost)}/mo</strong>Avg Monthly Bill</div>` : '',
+    prop.utility ? `<div class="cover-meta-item"><strong>${prop.utility}</strong>Utility Provider</div>` : '',
+  ].filter(Boolean).join('');
+
+  // ── Exec Summary ──
+  const yr1low = Math.round(monthlyWaste * 12 * 0.55);
+  const yr1high = Math.round(monthlyWaste * 12 * 0.90);
+  document.getElementById('r-exec-sub').textContent =
+    `Based on your property profile and ${entries.length > 0 ? entries.length+' months of utility data' : 'benchmark data for '+bm.label.toLowerCase()+' operations'}, BillDrop identified ${monthlyWaste > 0 ? fmt$(monthlyWaste)+'/month' : 'significant cost recovery opportunities'} in recoverable costs. Your Energy Score is ${score > 0 ? score+'/100' : 'pending data'} — ${score >= 70 ? 'above average for your type, with targeted improvements available' : score >= 45 ? 'at or near industry average, with clear upside in key systems' : 'below industry average, indicating high recovery potential'}.`;
+
+  document.getElementById('r-exec-grid').innerHTML = `
+    <div class="exec-card ec-red">
+      <div class="exec-card-lbl">Monthly Waste Identified</div>
+      <div class="exec-card-val">${fmt$(monthlyWaste)}</div>
+      <div class="exec-card-sub">Per month in recoverable costs</div>
+    </div>
+    <div class="exec-card ec-green">
+      <div class="exec-card-lbl">Year 1 Recovery Range</div>
+      <div class="exec-card-val">${fmt$(yr1low)}–${fmt$(yr1high)}</div>
+      <div class="exec-card-sub">Conservative to aggressive scenario</div>
+    </div>
+    <div class="exec-card ec-amber">
+      <div class="exec-card-lbl">Est. Rebate Eligibility</div>
+      <div class="exec-card-val" id="r-rebate-total">Calculating…</div>
+      <div class="exec-card-sub">Xcel Business Solutions programs</div>
+    </div>
+    <div class="exec-card ec-navy">
+      <div class="exec-card-lbl">Energy Intensity</div>
+      <div class="exec-card-val">${intensity > 0 ? Math.round(intensity) : '—'}</div>
+      <div class="exec-card-sub">kWh/sq ft/yr · Benchmark avg: ${bm.avg}</div>
+    </div>
+  `;
+
+  // ── Score ring ──
+  if(score > 0){
+    const circumference = 289;
+    const offset = circumference - (score/100)*circumference;
+    const arc = document.getElementById('r-score-arc');
+    arc.setAttribute('stroke-dashoffset', offset);
+    arc.setAttribute('stroke', scoreColor);
+    document.getElementById('r-score-num').textContent = score;
+    document.getElementById('r-score-num').setAttribute('fill', scoreColor);
+  }
+  document.getElementById('r-score-context').textContent =
+    score >= 70
+      ? `${prop.name} performs above average for a ${bm.label.toLowerCase()}. The biggest recovery opportunities are in targeted system optimization rather than wholesale replacement.`
+      : score >= 45
+      ? `${prop.name} is near the industry average for energy intensity. Focused improvements in HVAC scheduling and refrigeration can push this score significantly higher.`
+      : `${prop.name} is consuming more energy per square foot than ${Math.round((1-(score/100))*100)}% of comparable operations. This represents significant recovery potential with the right interventions.`;
+
+  const pills = [];
+  if(overPct > 20) pills.push(`<span class="score-pill pill-red">${overPct}% above avg</span>`);
+  if(intensity > 0) pills.push(`<span class="score-pill ${intensity<bm.avg?'pill-green':'pill-amber'}">${Math.round(intensity)} kWh/sqft/yr</span>`);
+  if(bm) pills.push(`<span class="score-pill pill-green">Benchmark: ${bm.avg} avg</span>`);
+  document.getElementById('r-score-pills').innerHTML = pills.join('');
+
+  // ── Breakdown ──
+  const breakdownBody = document.getElementById('r-breakdown-body');
+  breakdownBody.innerHTML = Object.entries(bm.breakdown).map(([cat,pct])=>{
+    const monthly = Math.round(avgCost * (pct/100));
+    const wasteEst = Math.round(monthly * 0.18);
+    return `<tr>
+      <td><strong>${cat}</strong></td>
+      <td>${pct}%</td>
+      <td>${fmt$(monthly)}/mo</td>
+      <td style="color:var(--R);font-size:.78rem">~${fmt$(wasteEst)}/mo recoverable</td>
+      <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div></td>
+    </tr>`;
+  }).join('');
+
+  // ── Cost Leaks ──
+  const leaks = Object.entries(bm.breakdown).map(([cat,pct])=>{
+    const monthly = Math.round(avgCost * (pct/100));
+    const waste = Math.round(monthly * (cat==='HVAC'?0.22:cat==='Refrigeration'?0.18:cat==='Lighting'?0.35:0.15));
+    const descs = {
+      HVAC:`Scheduling gaps, oversized setpoints, and equipment running after close. Most restaurants run HVAC 2–3 hours longer than needed.`,
+      Refrigeration:`Door seals, condenser coil cleanliness, and setpoint calibration. A 5°F setpoint error can add $80–$180/month.`,
+      Cooking:`Preheat timing, pilot light efficiency, and standby modes. Kitchen equipment left on idle accounts for 30–40% of cooking spend.`,
+      Brewing:`Brewing equipment cycling and water heating overlap. Scheduling alone can recover 15–25% of this category.`,
+      Lighting:`LED retrofit opportunities and daylight sensor gaps. Full LED conversion typically pays back in 18–24 months.`,
+      Equipment:`Standby power draw from equipment not in use. Power strips and smart plugs can recover this category for under $200.`,
+      HotWater:`Water heater setpoints and insulation. Most commercial water heaters run 15–20°F hotter than needed.`,
+      Other:`Miscellaneous plug loads, vending machines, and outdoor signage typically running on full power 24/7.`
+    };
+    return {cat, monthly, waste, desc: descs[cat]||`Benchmark-identified opportunity in ${cat.toLowerCase()} systems.`};
+  }).filter(l=>l.waste>0).sort((a,b)=>b.waste-a.waste).slice(0,5);
+
+  document.getElementById('r-leaks-sub').textContent =
+    `Based on your ${bm.label.toLowerCase()} benchmark profile and ${fmt$(avgCost)}/month average bill, BillDrop identified ${leaks.length} primary cost leak areas totaling approximately ${fmt$(leaks.reduce((s,l)=>s+l.waste,0))}/month.`;
+
+  document.getElementById('r-leaks-list').innerHTML = leaks.map((l,i)=>`
+    <div class="leak-item">
+      <div class="leak-rank">${i+1}</div>
+      <div class="leak-body">
+        <div class="leak-name">${l.cat}</div>
+        <div class="leak-desc">${l.desc}</div>
+      </div>
+      <div class="leak-val">
+        <div class="leak-monthly">${fmt$(l.waste)}</div>
+        <div class="leak-period">/month est.</div>
+        <div class="leak-period" style="color:var(--R)">${fmt$(l.waste*12)}/year</div>
+      </div>
+    </div>`).join('');
+
+  // ── Trend Chart ──
+  if(entries.length >= 2){
+    document.getElementById('r-trend-section').style.display = 'block';
+    const sorted = [...entries].sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month).slice(-12);
+    const maxKwh = Math.max(...sorted.map(e=>e.kwh));
+    const W = Math.max(600, sorted.length * 60);
+    const H = 160;
+    const pad = {t:20,b:40,l:10,r:10};
+    const chartW = W - pad.l - pad.r;
+    const chartH = H - pad.t - pad.b;
+    const barW = Math.floor(chartW / sorted.length) - 4;
+    const svg = document.getElementById('r-trend-chart');
+    svg.setAttribute('width', W);
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    let svgContent = '';
+    sorted.forEach((e,i)=>{
+      const barH = Math.round((e.kwh/maxKwh)*chartH);
+      const x = pad.l + i*(chartW/sorted.length) + 2;
+      const y = pad.t + chartH - barH;
+      const isMax = e.kwh === maxKwh;
+      svgContent += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="3" fill="${isMax?'#c93050':'#008f74'}" opacity="${isMax?'1':'0.7'}"/>`;
+      svgContent += `<text x="${x+barW/2}" y="${H-5}" text-anchor="middle" font-size="9" font-family="'Share Tech Mono',monospace" fill="#7a7a7a">${e.month}/${String(e.year).slice(2)}</text>`;
+      if(isMax) svgContent += `<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" font-size="8" font-family="'Share Tech Mono',monospace" fill="#c93050">PEAK</text>`;
+    });
+    svg.innerHTML = svgContent;
+  }
+
+  // ── Rebates ──
+  const rebates = [
+    {name:'Commercial HVAC Upgrade',desc:'Qualifying high-efficiency HVAC systems — rooftop units, VRF systems, and controls',amt:'$500–$2,400',eligible:true},
+    {name:'Commercial Refrigeration',desc:'Efficient display cases, reach-ins, and evaporator fan controls',amt:'$200–$1,800',eligible:true},
+    {name:'LED Interior Lighting',desc:'Full LED retrofit of kitchen, dining, and storage areas — fast payback',amt:'$150–$800',eligible:true},
+    {name:'Smart Thermostats / Controls',desc:'Programmable and networked controls — qualifies even without full HVAC replacement',amt:'$50–$350',eligible:true},
+    {name:'Variable Frequency Drives',desc:'VFDs on HVAC fans and motors — significant demand charge reduction',amt:'$300–$1,500',eligible: score < 70},
+    {name:'Kitchen Ventilation Controls',desc:'Demand-controlled kitchen ventilation — reduces HVAC load significantly',amt:'$400–$2,000',eligible: (bm.breakdown.Cooking||0) > 15},
+  ].filter(r=>r.eligible);
+
+  const totalRebateLow = rebates.reduce((s,r)=>s+parseInt(r.amt.replace(/[^0-9]/g,'')),0);
+  const totalRebateHigh = rebates.reduce((s,r)=>s+parseInt(r.amt.split('–')[1]||r.amt.replace(/[^0-9]/g,'')),0);
+  document.getElementById('r-rebate-total').textContent = `$${(totalRebateLow/1000).toFixed(1)}K–$${(totalRebateHigh/1000).toFixed(1)}K`;
+  document.getElementById('r-rebates-sub').textContent =
+    `${prop.utility||'Your utility provider'} offers ${rebates.length} programs your business likely qualifies for based on your property profile. BillDrop manages the complete submission process — you provide equipment specs, we handle the paperwork.`;
+  document.getElementById('r-rebates-list').innerHTML = rebates.map(r=>`
+    <div class="rebate-item">
+      <div><div class="rebate-name">${r.name}</div><div class="rebate-desc">${r.desc}</div></div>
+      <div class="rebate-amt">${r.amt}</div>
+    </div>`).join('');
+
+  // ── Forecast ──
+  const scenarios = [
+    {label:'Tier 1 Only — Rate & Scheduling',pct:.30,tag:'No Capital Required'},
+    {label:'Tier 1 + 2 — Plus Equipment Tune-Up',pct:.55,tag:'Low Cost'},
+    {label:'All Tiers — Full Implementation',pct:.80,tag:'Maximum Recovery'},
+  ];
+  document.getElementById('r-forecast-body').innerHTML = scenarios.map((s,i)=>`
+    <tr ${i===2?'class="highlight"':''}>
+      <td>${s.label}<br><small style="font-weight:400;color:var(--muted);font-size:.72rem">${s.tag}</small></td>
+      <td class="${i===2?'ft-val':''}">${fmt$(monthlyWaste*s.pct*1)}</td>
+      <td class="${i===2?'ft-val':''}">${fmt$(monthlyWaste*s.pct*3)}</td>
+      <td class="${i===2?'ft-val':''}">${fmt$(monthlyWaste*s.pct*6)}</td>
+      <td class="${i===2?'ft-val':''}">${fmt$(monthlyWaste*s.pct*12)}</td>
+    </tr>`).join('');
+
+  // ── Next Steps ──
+  const steps = [
+    {num:1,title:'Review Rate Schedule with BillDrop',desc:`Your utility rate schedule determines how your bill is calculated. We'll confirm you're on the optimal rate for your usage pattern — this alone can recover $80–$220/month for most restaurants.`,tag:'free',tagLabel:'Free · Included in Report'},
+    {num:2,title:'Schedule a Rapid Assessment Call',desc:`30-minute call to walk through each finding line by line. We'll prioritize the 2–3 highest-impact actions for your specific situation and confirm rebate eligibility.`,tag:'free',tagLabel:'Free · No Commitment'},
+    {num:3,title:'Submit Rebate Applications',desc:`BillDrop handles the Xcel Business Solutions paperwork from start to finish. Average processing time is 6–10 weeks. You collect the check.`,tag:'paid',tagLabel:'15% of Recovered Rebates'},
+    {num:4,title:'Implement Tier 1 Changes',desc:`Scheduling adjustments, setpoint corrections, and controls programming — no capital required. Most clients see bill impact within 30 days of implementation.`,tag:'quick',tagLabel:'30-Day Impact'},
+    {num:5,title:'Enroll in Monthly Monitoring',desc:`BillDrop tracks your bill every month, flags anomalies, and updates your recovery score. Catches new issues before they compound.`,tag:'paid',tagLabel:'$129/month'},
+  ];
+  document.getElementById('r-steps-list').innerHTML = steps.map(s=>`
+    <div class="step-item">
+      <div class="step-num">${s.num}</div>
+      <div class="step-content">
+        <div class="step-title">${s.title}</div>
+        <div class="step-desc">${s.desc}</div>
+        <span class="step-tag tag-${s.tag}">${s.tagLabel}</span>
+      </div>
+    </div>`).join('');
+
+  // ── Show report ──
+  document.getElementById('loading').style.display='none';
+  document.getElementById('report').style.display='block';
+}
+
+document.addEventListener('DOMContentLoaded', buildReport);
+</script>
+</body>
+</html>
