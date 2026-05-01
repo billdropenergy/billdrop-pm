@@ -1,0 +1,2413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BillDrop 2.0 — Portfolio Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#03030a;--surface:#0a0a18;--card:#0f0f22;--border:#1e1e38;--text:#dce3f5;--muted:#393d6a;--teal:#00d4aa;--volt:#00d4aa;--red:#ff3d6b;--amber:#ffaa35;--green:#3dffa0;--blue:#3a8fff;--sw:260px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
+/* BG */
+#vbg{position:fixed;inset:0;pointer-events:none;z-index:0}
+/* SIDEBAR */
+#sidebar{width:var(--sw);min-height:100vh;background:rgba(6,3,15,.97);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto}
+.sb-brand{padding:1.3rem 1.1rem .9rem;border-bottom:1px solid var(--border)}
+.sb-logo{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:var(--volt);letter-spacing:.03em;text-shadow:0 0 22px rgba(160,107,255,.35)}
+.sb-logo span{color:var(--teal)}
+.sb-sub{font-size:.48rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:.2rem;font-family:'Space Mono',monospace}
+.sb-sec{padding:.65rem .68rem .1rem}
+.sb-sec-lbl{font-size:.48rem;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);padding:0 .35rem;margin-bottom:.32rem;font-family:'Space Mono',monospace}
+.ni{display:flex;align-items:center;gap:.45rem;padding:.42rem .6rem;border-radius:9px;cursor:pointer;font-size:.73rem;color:var(--muted);transition:all .13s;border:1px solid transparent;margin-bottom:.05rem;font-weight:500}
+.ni:hover{color:var(--text);background:var(--surface)}
+.ni.on{color:var(--volt);background:rgba(160,107,255,.07);border-color:rgba(160,107,255,.15)}
+.ni-ic{font-size:.76rem;flex-shrink:0}
+.sb-stats{margin:.6rem .7rem 0;display:flex;flex-direction:column;gap:.38rem}
+.sb-stat{background:rgba(160,107,255,.055);border:1px solid rgba(160,107,255,.12);border-radius:9px;padding:.6rem .75rem}
+.sb-stat-lbl{font-size:.48rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.1rem}
+.sb-stat-val{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:900;color:var(--volt);line-height:1;text-shadow:0 0 18px rgba(160,107,255,.3)}
+.sb-stat-sub{font-size:.58rem;color:var(--muted);margin-top:.08rem}
+/* MAIN */
+#main{margin-left:var(--sw);flex:1;min-height:100vh;position:relative;z-index:1}
+.page{display:none;padding:2.2rem 2.2rem 6rem;max-width:980px}
+.page.on{display:block}
+.pg-ey{font-size:.51rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:.52rem;font-family:'Space Mono',monospace;display:flex;align-items:center;gap:.42rem}
+.pg-ey::before{content:'';width:13px;height:1px;background:var(--volt)}
+h1.pgt{font-family:'Fraunces',serif;font-size:clamp(2.1rem,5vw,3.4rem);font-weight:900;color:#fff;line-height:.93;letter-spacing:.01em;margin-bottom:.52rem}
+h1.pgt em{color:var(--volt);font-style:italic;text-shadow:0 0 24px rgba(160,107,255,.22)}
+.pgd{color:var(--muted);font-size:.78rem;line-height:1.75;max-width:570px;margin-bottom:1.75rem}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:1.2rem 1.4rem}
+.card-teal{border-color:rgba(0,212,170,.15);background:rgba(0,212,170,.03)}
+.card-volt{border-color:rgba(160,107,255,.15);background:rgba(160,107,255,.03)}
+.card-red{border-color:rgba(255,77,106,.15);background:rgba(255,77,106,.03)}
+/* GRID */
+.g2{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.7rem;margin-bottom:1.3rem}
+.g3{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.7rem;margin-bottom:1.3rem}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:1rem 1.2rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px}
+.sc-volt::before{background:var(--volt)}.sc-teal::before{background:var(--teal)}.sc-red::before{background:var(--red)}.sc-amber::before{background:var(--amber)}.sc-green::before{background:var(--green)}
+.sc-ic{font-size:1.15rem;margin-bottom:.42rem}
+.sc-lbl{font-size:.54rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:.12rem}
+.sc-val{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:900;line-height:1}
+.sc-sub{font-size:.63rem;color:var(--muted);margin-top:.12rem;line-height:1.5}
+/* FORMS */
+.fgrp{display:flex;flex-direction:column;gap:.2rem;margin-bottom:.75rem}
+.flbl{font-size:.58rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.finp{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:.52rem .78rem;font-size:.8rem;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;width:100%}
+.finp:focus{border-color:var(--volt)}
+select.finp{cursor:pointer}
+.finp::placeholder{color:var(--muted)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem}
+/* BUTTONS */
+.btn{font-size:.7rem;font-family:'Space Mono',monospace;padding:.5rem 1.15rem;border-radius:9px;cursor:pointer;transition:all .18s;border:1px solid}
+.btn-v{background:rgba(160,107,255,.12);border-color:rgba(160,107,255,.28);color:var(--volt)}.btn-v:hover{background:rgba(160,107,255,.2)}
+.btn-t{background:rgba(0,212,170,.1);border-color:rgba(0,212,170,.26);color:var(--teal)}.btn-t:hover{background:rgba(0,212,170,.18)}
+.btn-r{background:rgba(255,77,106,.1);border-color:rgba(255,77,106,.24);color:var(--red)}.btn-r:hover{background:rgba(255,77,106,.18)}
+.btn-g{background:rgba(57,255,158,.1);border-color:rgba(57,255,158,.24);color:var(--green)}.btn-g:hover{background:rgba(57,255,158,.18)}
+.btn-muted{background:var(--surface);border-color:var(--border);color:var(--muted)}.btn-muted:hover{border-color:var(--muted);color:var(--text)}
+/* SECTION HEADERS */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;padding-bottom:.65rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
+.sh-ti{font-family:'Fraunces',serif;font-size:1rem;font-weight:900;color:#fff}
+.sh-sub{font-size:.63rem;color:var(--muted);margin-top:.08rem}
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:.76rem}
+.tbl th{text-align:left;padding:.52rem .72rem;font-size:.54rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:.58rem .72rem;border-bottom:1px solid rgba(26,18,40,.6);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(160,107,255,.03)}
+/* BADGES */
+.bdg{display:inline-block;font-size:.5rem;font-family:'Space Mono',monospace;font-weight:700;padding:.1rem .38rem;border-radius:100px;text-transform:uppercase;letter-spacing:.06em}
+.bdg-v{background:rgba(160,107,255,.12);color:var(--volt)}
+.bdg-t{background:rgba(0,212,170,.12);color:var(--teal)}
+.bdg-r{background:rgba(255,77,106,.12);color:var(--red)}
+.bdg-a{background:rgba(255,179,71,.12);color:var(--amber)}
+.bdg-g{background:rgba(57,255,158,.12);color:var(--green)}
+.bdg-m{background:rgba(74,64,96,.3);color:var(--muted)}
+/* PROGRESS BAR */
+.pbar-wrap{margin:.4rem 0}
+.pbar-lbs{display:flex;justify-content:space-between;font-size:.54rem;font-family:'Space Mono',monospace;color:var(--muted);margin-bottom:.22rem}
+.pbar-tr{height:5px;background:var(--border);border-radius:100px;overflow:hidden}
+.pbar-fi{height:100%;border-radius:100px;transition:width .6s}
+/* PROPERTY CARDS */
+.prop-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:1.15rem 1.3rem;position:relative;overflow:hidden;cursor:pointer;transition:all .2s}
+.prop-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--volt)}
+.prop-card:hover{border-color:rgba(160,107,255,.25);transform:translateY(-2px)}
+.prop-card.selected{border-color:rgba(160,107,255,.35);background:rgba(160,107,255,.04)}
+.pc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.72rem}
+.pc-name{font-family:'Fraunces',serif;font-size:.98rem;font-weight:900;color:#fff}
+.pc-type{font-size:.6rem;font-family:'Space Mono',monospace;color:var(--volt);margin-top:.1rem}
+.pc-score{font-family:'Fraunces',serif;font-size:2rem;font-weight:900;line-height:1}
+.pc-score-lbl{font-size:.48rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.pc-meta{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem}
+.pc-m{font-size:.62rem;color:var(--muted)}
+.pc-m span{color:var(--text);font-weight:600}
+.pc-actions{display:flex;gap:.42rem;flex-wrap:wrap}
+/* AI PANEL */
+.ai-panel{background:linear-gradient(135deg,rgba(160,107,255,.07),rgba(0,212,170,.04));border:1px solid rgba(160,107,255,.2);border-radius:14px;padding:1.45rem}
+.ai-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.1rem}
+.ai-ic{font-size:1.6rem}
+.ai-title{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:900;color:#fff}
+.ai-sub{font-size:.66rem;color:var(--muted);margin-top:.1rem}
+.ai-out{background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:11px;padding:1.1rem 1.2rem;font-size:.77rem;line-height:1.85;color:var(--text);min-height:120px;white-space:pre-wrap;word-wrap:break-word;margin-bottom:.85rem}
+.ai-out.empty{color:var(--muted);font-style:italic}
+.ai-loading{display:flex;align-items:center;gap:.6rem;color:var(--volt);font-size:.72rem;font-family:'Space Mono',monospace}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:var(--volt);animation:aiPulse .8s infinite alternate}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes aiPulse{from{opacity:.2;transform:scale(.8)}to{opacity:1;transform:scale(1.2)}}
+.ai-btns{display:flex;gap:.55rem;flex-wrap:wrap}
+/* SCORE RING */
+.score-ring{position:relative;width:88px;height:88px;flex-shrink:0}
+.score-ring svg{transform:rotate(-90deg)}
+.score-ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1.5rem;font-weight:900;line-height:1}
+.score-ring-lbl{text-align:center;font-size:.48rem;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.22rem}
+/* BENCHMARK BAR */
+.bm-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.55rem}
+.bm-lbl{font-size:.65rem;color:var(--text);width:130px;flex-shrink:0}
+.bm-track{flex:1;height:8px;background:var(--border);border-radius:100px;position:relative;overflow:visible}
+.bm-fill{height:100%;border-radius:100px;transition:width .8s}
+.bm-avg-line{position:absolute;top:-4px;height:16px;width:2px;background:rgba(255,255,255,.25);border-radius:1px}
+.bm-val{font-size:.62rem;font-family:'Space Mono',monospace;color:var(--muted);width:70px;text-align:right;flex-shrink:0}
+/* LEAK CARD */
+.lk-card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:.95rem 1.1rem;margin-bottom:.48rem;display:flex;align-items:center;gap:1rem;transition:all .2s}
+.lk-card:hover{border-color:var(--muted)}
+.lk-num{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:900;color:var(--volt);opacity:.35;flex-shrink:0;width:28px;line-height:1}
+.lk-info{flex:1}
+.lk-name{font-weight:600;font-size:.82rem;color:#fff;margin-bottom:.1rem}
+.lk-why{font-size:.65rem;color:var(--muted);line-height:1.55}
+.lk-dollar{text-align:right;flex-shrink:0}
+.lk-amt{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:var(--red);line-height:1}
+.lk-period{font-size:.52rem;font-family:'Space Mono',monospace;color:var(--muted)}
+/* PIPELINE */
+.pl-card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:1rem 1.2rem;margin-bottom:.45rem;transition:all .2s;position:relative;overflow:hidden}
+.pl-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.pl-prospecting::before{background:var(--muted)}
+.pl-contacted::before{background:var(--blue)}
+.pl-meeting::before{background:var(--amber)}
+.pl-analysis::before{background:var(--volt)}
+.pl-proposal::before{background:var(--teal)}
+.pl-won::before{background:var(--green)}
+.pl-lost::before{background:var(--red)}
+.pl-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.6rem;flex-wrap:wrap;gap:.4rem}
+.pl-name{font-family:'Fraunces',serif;font-size:.92rem;font-weight:900;color:#fff}
+.pl-addr{font-size:.62rem;color:var(--muted);margin-top:.06rem}
+.pl-meta{display:flex;gap:.55rem;flex-wrap:wrap;align-items:center;margin-bottom:.6rem}
+.pl-actions{display:flex;gap:.38rem;flex-wrap:wrap}
+/* COPY BTN */
+.copy-btn{font-size:.6rem;font-family:'Space Mono',monospace;background:rgba(57,255,158,.08);border:1px solid rgba(57,255,158,.2);border-radius:6px;padding:.25rem .6rem;color:var(--green);cursor:pointer;transition:all .15s}
+.copy-btn:hover{background:rgba(57,255,158,.15)}
+/* TOAST */
+#vpm-toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:.62rem .95rem;font-size:.72rem;color:var(--text);z-index:9999;transition:all .3s;opacity:0;transform:translateY(10px);pointer-events:none;max-width:240px}
+#vpm-toast.show{opacity:1;transform:translateY(0)}
+/* MONTH CHIPS */
+.month-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:.35rem;margin-bottom:.75rem}
+.month-chip{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.35rem .4rem;text-align:center;cursor:pointer;transition:all .15s}
+.month-chip.has-data{background:rgba(0,212,170,.07);border-color:rgba(0,212,170,.2)}
+.month-chip.selected{background:rgba(160,107,255,.12);border-color:rgba(160,107,255,.3)}
+.mc-mo{font-size:.6rem;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase}
+.mc-kwh{font-family:'Fraunces',serif;font-size:.78rem;font-weight:700;color:var(--teal)}
+@media(max-width:640px){:root{--sw:0px}#sidebar{display:none}#main{margin-left:0}.page{padding:1.2rem .8rem 4rem}}
+</style>
+</head>
+<body>
+<canvas id="vbg" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none"></canvas>
+<nav id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">BILL<span>DROP</span></div>
+    <div class="sb-sub">Portfolio Manager</div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-sec-lbl">Core</div>
+    <div class="ni on" onclick="goTo('dashboard')"><span class="ni-ic">⚡</span>Dashboard</div>
+    <div class="ni" onclick="goTo('properties')"><span class="ni-ic">🏢</span>Properties</div>
+    <div class="ni" onclick="goTo('energylog')"><span class="ni-ic">📊</span>Energy Log</div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-sec-lbl">Analysis</div>
+    <div class="ni" onclick="goTo('benchmarks')"><span class="ni-ic">📐</span>Benchmarks</div>
+    <div class="ni" onclick="goTo('leaks')"><span class="ni-ic">💸</span>Cost Leaks</div>
+    <div class="ni" onclick="goTo('reports')"><span class="ni-ic">📋</span>Report Builder</div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-sec-lbl">Business</div>
+    <div class="ni" onclick="goTo('pipeline')"><span class="ni-ic">🎯</span>Pipeline</div>
+    <div class="ni" onclick="goTo('referral')"><span class="ni-ic">🤝</span>Referral Partners</div>
+    <div class="ni" onclick="goTo('casestudies')"><span class="ni-ic">📑</span>Case Studies</div>
+    <div class="ni" onclick="goTo('forecaster')"><span class="ni-ic">📈</span>Revenue Forecaster</div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-sec-lbl">AI</div>
+    <div class="ni" onclick="goTo('ai')"><span class="ni-ic">🧠</span>AI Analyst</div>
+  </div>
+  <div class="sb-stats">
+    <div class="sb-stat">
+      <div class="sb-stat-lbl">Active Clients</div>
+      <div class="sb-stat-val" id="sb-clients">0</div>
+      <div class="sb-stat-sub">properties tracked</div>
+    </div>
+    <div class="sb-stat">
+      <div class="sb-stat-lbl">Total Est. Savings</div>
+      <div class="sb-stat-val" id="sb-savings">$0</div>
+      <div class="sb-stat-sub">identified across portfolio</div>
+    </div>
+  </div>
+</nav>
+<main id="main">
+
+<!-- ████ DASHBOARD ████ -->
+<div class="page on" id="dashboard">
+  <div class="pg-ey">BillDrop Portfolio Manager</div>
+  <h1 class="pgt">Your entire<br><em>portfolio.</em></h1>
+  <p class="pgd">Every client, every number, every opportunity — live. This is command central for BillDrop.</p>
+  <div class="g2" style="margin-bottom:1.4rem">
+    <div class="stat-card sc-volt"><div class="sc-ic">🏢</div><div class="sc-lbl">Active Properties</div><div class="sc-val" id="d-props" style="color:var(--volt)">0</div><div class="sc-sub">clients being tracked</div></div>
+    <div class="stat-card sc-teal"><div class="sc-ic">💸</div><div class="sc-lbl">Est. Monthly Waste</div><div class="sc-val" id="d-waste" style="color:var(--teal)">$0</div><div class="sc-sub">across all properties</div></div>
+    <div class="stat-card sc-green"><div class="sc-ic">📈</div><div class="sc-lbl">Year 1 Savings Potential</div><div class="sc-val" id="d-savings" style="color:var(--green)">$0</div><div class="sc-sub">if all clients act</div></div>
+    <div class="stat-card sc-amber"><div class="sc-ic">🎯</div><div class="sc-lbl">Pipeline Value</div><div class="sc-val" id="d-pipeline" style="color:var(--amber)">$0</div><div class="sc-sub">potential revenue</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.4rem">
+    <div class="card">
+      <div class="sh"><div><div class="sh-ti">⚡ Priority Alerts</div><div class="sh-sub">Properties needing attention</div></div></div>
+      <div id="d-alerts"><div style="font-size:.72rem;color:var(--muted);font-style:italic">No alerts yet. Add properties and log data to see alerts.</div></div>
+    </div>
+    <div class="card">
+      <div class="sh"><div><div class="sh-ti">🏆 Top Opportunities</div><div class="sh-sub">Highest savings potential</div></div></div>
+      <div id="d-opps"><div style="font-size:.72rem;color:var(--muted);font-style:italic">Add properties to see opportunities.</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sh"><div><div class="sh-ti">📊 Portfolio Overview</div><div class="sh-sub">All active properties at a glance</div></div><button class="btn btn-v" onclick="goTo('properties')">+ Add Property</button></div>
+    <div id="d-portfolio-list"><div style="font-size:.72rem;color:var(--muted);font-style:italic;padding:.5rem 0">No properties yet. Click "Add Property" to get started.</div></div>
+  </div>
+</div>
+
+<!-- ████ PROPERTIES ████ -->
+<div class="page" id="properties">
+  <div class="pg-ey">BillDrop · Properties</div>
+  <h1 class="pgt">Client<br><em>profiles.</em></h1>
+  <p class="pgd">Every restaurant and business you're tracking. Add a property the moment a client says yes — even if you don't have their data yet.</p>
+  <div class="card" style="margin-bottom:1.4rem">
+    <div class="sh"><div><div class="sh-ti">Add New Property</div></div></div>
+    <div class="frow">
+      <div class="fgrp"><div class="flbl">Business Name</div><input class="finp" id="p-name" placeholder="e.g. Rosa's Italian Kitchen"></div>
+      <div class="fgrp"><div class="flbl">Business Type</div>
+        <select class="finp" id="p-type">
+          <option value="restaurant">Restaurant (Full Service)</option>
+          <option value="fastfood">Fast Food / QSR</option>
+          <option value="cafe">Cafe / Coffee Shop</option>
+          <option value="gym">Gym / Fitness</option>
+          <option value="retail">Retail Store</option>
+          <option value="medical">Medical Office</option>
+          <option value="hotel">Hotel / Lodging</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fgrp"><div class="flbl">Address</div><input class="finp" id="p-addr" placeholder="Street address"></div>
+      <div class="fgrp"><div class="flbl">Owner / Contact Name</div><input class="finp" id="p-owner" placeholder="e.g. Maria Rosario"></div>
+    </div>
+    <div class="frow3">
+      <div class="fgrp"><div class="flbl">Square Footage</div><input class="finp" id="p-sqft" type="number" placeholder="e.g. 2400"></div>
+      <div class="fgrp"><div class="flbl">Avg Monthly Bill ($)</div><input class="finp" id="p-bill" type="number" placeholder="e.g. 1800"></div>
+      <div class="fgrp"><div class="flbl">Utility Provider</div><input class="finp" id="p-util" placeholder="e.g. ConEd"></div>
+    </div>
+    <div class="frow">
+      <div class="fgrp"><div class="flbl">Operating Hours / week</div><input class="finp" id="p-hours" type="number" placeholder="e.g. 72"></div>
+      <div class="fgrp"><div class="flbl">Number of Staff (peak)</div><input class="finp" id="p-staff" type="number" placeholder="e.g. 8"></div>
+    </div>
+    <div class="fgrp"><div class="flbl">Notes (equipment, age, anything relevant)</div><textarea class="finp" id="p-notes" placeholder="e.g. HVAC is 12 years old, uses commercial fryers and 3 walk-in coolers..." style="height:70px;resize:vertical"></textarea></div>
+    <div style="display:flex;gap:.6rem;margin-top:.4rem">
+      <button class="btn btn-v" onclick="addProperty()">+ Add Property</button>
+      <button class="btn btn-muted" onclick="clearPropForm()">Clear</button>
+    </div>
+  </div>
+  <div class="sh"><div><div class="sh-ti">Your Properties</div><div class="sh-sub" id="prop-count-lbl">No properties yet</div></div></div>
+  <div id="prop-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem"></div>
+</div>
+
+<!-- ████ ENERGY LOG ████ -->
+<div class="page" id="energylog">
+  <div class="pg-ey">BillDrop · Energy Log</div>
+  <h1 class="pgt">Monthly<br><em>data entry.</em></h1>
+  <p class="pgd">Log utility bill data for each property every month. This is the raw fuel for your analysis. The more months you have, the better your insights.</p>
+  <div class="card" style="margin-bottom:1.2rem">
+    <div class="sh"><div><div class="sh-ti">Select Property</div></div></div>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+      <select class="finp" id="el-prop-sel" style="max-width:280px" onchange="loadEnergyLog()"><option value="">— Select a property —</option></select>
+      <div style="font-size:.65rem;color:var(--muted);font-family:'Space Mono',monospace" id="el-prop-info"></div>
+    </div>
+  </div>
+  <div id="el-form-wrap" style="display:none">
+    <div class="card" style="margin-bottom:1.2rem">
+      <div class="sh"><div><div class="sh-ti">Log a Month</div><div class="sh-sub">Add or update a month's utility data</div></div></div>
+      <div class="frow3">
+        <div class="fgrp"><div class="flbl">Month</div>
+          <select class="finp" id="el-month">
+            <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+            <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div class="fgrp"><div class="flbl">Year</div><input class="finp" id="el-year" type="number" placeholder="2025" value="2025"></div>
+        <div class="fgrp"><div class="flbl">kWh Used</div><input class="finp" id="el-kwh" type="number" placeholder="e.g. 8500"></div>
+      </div>
+      <div class="frow3">
+        <div class="fgrp"><div class="flbl">Total Bill ($)</div><input class="finp" id="el-cost" type="number" placeholder="e.g. 1840"></div>
+        <div class="fgrp"><div class="flbl">Peak Demand (kW)</div><input class="finp" id="el-peak" type="number" placeholder="e.g. 42" ></div>
+        <div class="fgrp"><div class="flbl">Rate ($/kWh)</div><input class="finp" id="el-rate" type="number" step="0.001" placeholder="auto-calc"></div>
+      </div>
+      <div class="fgrp"><div class="flbl">Notes (anything unusual this month?)</div><input class="finp" id="el-note" placeholder="e.g. July heatwave, HVAC ran extra"></div>
+      <div style="display:flex;gap:.6rem;margin-top:.4rem">
+        <button class="btn btn-t" onclick="saveEnergyEntry()">💾 Save Month</button>
+        <button class="btn btn-muted" onclick="clearElForm()">Clear</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sh"><div><div class="sh-ti">📅 All Logged Months</div><div class="sh-sub" id="el-months-count">0 months logged</div></div></div>
+      <div class="month-grid" id="el-month-grid"></div>
+      <div style="overflow-x:auto"><table class="tbl" id="el-table">
+        <thead><tr><th>Month</th><th>kWh</th><th>Cost</th><th>Rate</th><th>Peak kW</th><th>vs Avg</th><th>Notes</th><th></th></tr></thead>
+        <tbody id="el-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+  <div id="el-empty" style="font-size:.78rem;color:var(--muted);font-style:italic;margin-top:1rem">Select a property to log energy data.</div>
+</div>
+
+<!-- ████ BENCHMARKS ████ -->
+<div class="page" id="benchmarks">
+  <div class="pg-ey">BillDrop · Benchmarks</div>
+  <h1 class="pgt">How they compare<br><em>to everyone else.</em></h1>
+  <p class="pgd">Industry benchmark data sourced from the U.S. Department of Energy and EnergyStar. Select a property and see exactly where they stand.</p>
+  <div class="card" style="margin-bottom:1.2rem">
+    <div class="sh"><div><div class="sh-ti">Select Property</div></div></div>
+    <select class="finp" id="bm-prop-sel" style="max-width:280px" onchange="runBenchmark()"><option value="">— Select a property —</option></select>
+  </div>
+  <div id="bm-results" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr auto;gap:1.2rem;margin-bottom:1.2rem;align-items:start">
+      <div class="card">
+        <div class="sh"><div><div class="sh-ti">Energy Intensity</div><div class="sh-sub">kWh per square foot per year</div></div></div>
+        <div class="bm-row"><div class="bm-lbl">This property</div><div class="bm-track"><div class="bm-fill" id="bm-this-bar" style="background:var(--volt)"></div><div class="bm-avg-line" id="bm-avg-line"></div></div><div class="bm-val" id="bm-this-val"></div></div>
+        <div class="bm-row"><div class="bm-lbl">Industry avg</div><div class="bm-track"><div class="bm-fill" id="bm-avg-bar" style="background:rgba(255,255,255,.15)"></div></div><div class="bm-val" id="bm-avg-val"></div></div>
+        <div class="bm-row"><div class="bm-lbl">Best in class</div><div class="bm-track"><div class="bm-fill" id="bm-best-bar" style="background:var(--green)"></div></div><div class="bm-val" id="bm-best-val"></div></div>
+        <div style="margin-top:.85rem;padding:.75rem 1rem;background:var(--surface);border-radius:9px;font-size:.72rem;line-height:1.75" id="bm-verdict"></div>
+      </div>
+      <div>
+        <div class="score-ring" style="width:110px;height:110px">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8"/>
+            <circle cx="55" cy="55" r="46" fill="none" stroke-width="8" stroke-linecap="round" id="bm-score-arc" stroke-dasharray="289" stroke-dashoffset="289" style="transition:stroke-dashoffset .8s"/>
+          </svg>
+          <div class="score-ring-val" id="bm-score-val" style="font-size:1.8rem">—</div>
+        </div>
+        <div class="score-ring-lbl">Energy Score</div>
+        <div style="margin-top:.6rem;font-size:.58rem;font-family:'Space Mono',monospace;color:var(--muted);text-align:center;max-width:110px;line-height:1.6">100 = best<br>50 = avg<br>1 = worst</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:1.2rem">
+      <div class="sh"><div><div class="sh-ti">Breakdown by Category</div><div class="sh-sub">Estimated share of total usage</div></div></div>
+      <div id="bm-breakdown"></div>
+    </div>
+    <div class="card card-volt">
+      <div class="sh"><div><div class="sh-ti">🧠 Benchmark Insight</div><div class="sh-sub">What this score means for your pitch</div></div></div>
+      <div id="bm-insight" style="font-size:.77rem;line-height:1.82;color:var(--text)"></div>
+    </div>
+  </div>
+  <div id="bm-empty" style="font-size:.78rem;color:var(--muted);font-style:italic">Select a property with logged energy data to see benchmarks.</div>
+</div>
+
+<!-- ████ COST LEAKS ████ -->
+<div class="page" id="leaks">
+  <div class="pg-ey">BillDrop · Cost Leaks</div>
+  <h1 class="pgt">Where the money<br><em>is bleeding.</em></h1>
+  <p class="pgd">Select a property or run a manual calculation. The leak detector breaks down estimated waste by system and gives you the dollar numbers for your report.</p>
+  <div class="card" style="margin-bottom:1.2rem">
+    <div class="sh"><div><div class="sh-ti">Property Leak Analysis</div></div></div>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.85rem">
+      <select class="finp" id="lk-prop-sel" style="max-width:280px" onchange="runLeakAnalysis()"><option value="">— Select a property or enter manually —</option></select>
+    </div>
+    <div style="font-size:.62rem;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-bottom:.6rem">Or enter manually:</div>
+    <div class="frow3">
+      <div class="fgrp"><div class="flbl">Monthly Bill ($)</div><input class="finp" id="lk-bill" type="number" placeholder="e.g. 2200"></div>
+      <div class="fgrp"><div class="flbl">Square Footage</div><input class="finp" id="lk-sqft" type="number" placeholder="e.g. 2400"></div>
+      <div class="fgrp"><div class="flbl">Business Type</div>
+        <select class="finp" id="lk-type">
+          <option value="restaurant">Restaurant</option><option value="fastfood">Fast Food</option>
+          <option value="cafe">Cafe</option><option value="gym">Gym</option>
+          <option value="retail">Retail</option><option value="medical">Medical</option><option value="hotel">Hotel</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow3">
+      <div class="fgrp"><div class="flbl">HVAC Age (years)</div><input class="finp" id="lk-hvac-age" type="number" placeholder="e.g. 10"></div>
+      <div class="fgrp"><div class="flbl">Lighting Type</div>
+        <select class="finp" id="lk-lighting">
+          <option value="led">All LED</option><option value="mixed">Mixed</option><option value="fluorescent">Fluorescent</option><option value="incandescent">Incandescent</option>
+        </select>
+      </div>
+      <div class="fgrp"><div class="flbl">On Peak-Hours Tariff?</div>
+        <select class="finp" id="lk-peak-tariff">
+          <option value="no">No</option><option value="yes">Yes</option><option value="unknown">Unknown</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-r" onclick="calcLeaks()" style="margin-top:.4rem">🔍 Calculate Cost Leaks</button>
+  </div>
+  <div id="lk-results" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="stat-card sc-red"><div class="sc-lbl">Est. Monthly Waste</div><div class="sc-val" id="lk-total-mo" style="color:var(--red)">$0</div><div class="sc-sub">money leaving every month</div></div>
+      <div class="stat-card sc-green"><div class="sc-lbl">Year 1 Savings Potential</div><div class="sc-val" id="lk-total-yr" style="color:var(--green)">$0</div><div class="sc-sub">if all leaks addressed</div></div>
+    </div>
+    <div id="lk-cards"></div>
+    <div class="card card-teal" style="margin-top:1rem">
+      <div class="sh"><div><div class="sh-ti">📋 Copy to Report</div></div><button class="copy-btn" onclick="copyLeaks()">Copy</button></div>
+      <div id="lk-copy-text" style="font-size:.72rem;line-height:1.82;color:var(--text);white-space:pre-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ████ REPORT BUILDER ████ -->
+<div class="page" id="reports">
+  <div class="pg-ey">BillDrop · Report Builder</div>
+  <h1 class="pgt">Auto-build your<br><em>report.</em></h1>
+  <p class="pgd">Select a property with data logged and hit generate. The builder pulls every number you've entered and auto-fills the report template. Copy each section straight into your Word doc.</p>
+  <div class="card" style="margin-bottom:1.2rem">
+    <div class="sh"><div><div class="sh-ti">Select Property</div></div></div>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+      <select class="finp" id="rb-prop-sel" style="max-width:280px"><option value="">— Select a property —</option></select>
+      <button class="btn btn-v" onclick="buildReport()">⚡ Build Report</button>
+    </div>
+  </div>
+  <div id="rb-output" style="display:none">
+    <div class="card" style="margin-bottom:1rem">
+      <div class="sh"><div><div class="sh-ti">📊 Executive Summary Numbers</div></div><button class="copy-btn" onclick="copySection('rb-exec')">Copy</button></div>
+      <div id="rb-exec" class="ai-out"></div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="sh"><div><div class="sh-ti">📐 Benchmark Section</div></div><button class="copy-btn" onclick="copySection('rb-bm')">Copy</button></div>
+      <div id="rb-bm" class="ai-out"></div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="sh"><div><div class="sh-ti">💸 Cost Leak Section</div></div><button class="copy-btn" onclick="copySection('rb-leaks')">Copy</button></div>
+      <div id="rb-leaks" class="ai-out"></div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="sh"><div><div class="sh-ti">📅 Monthly Trend</div></div><button class="copy-btn" onclick="copySection('rb-trend')">Copy</button></div>
+      <div id="rb-trend" class="ai-out"></div>
+    </div>
+    <div class="card card-volt">
+      <div class="sh"><div><div class="sh-ti">💰 Savings Forecast Table</div></div><button class="copy-btn" onclick="copySection('rb-forecast')">Copy</button></div>
+      <div id="rb-forecast" class="ai-out"></div>
+    </div>
+  </div>
+  <div id="rb-empty" style="font-size:.78rem;color:var(--muted);font-style:italic">Select a property and click Build Report.</div>
+</div>
+
+<!-- ████ PIPELINE ████ -->
+<div class="page" id="pipeline">
+  <div class="pg-ey">BillDrop · Pipeline</div>
+  <h1 class="pgt">Your leads.<br><em>Your money.</em></h1>
+  <p class="pgd">Every restaurant you're targeting. Track them from first contact to closed client. Don't keep this in your head — keep it here.</p>
+  <div class="card" style="margin-bottom:1.4rem">
+    <div class="sh"><div><div class="sh-ti">Add Lead</div></div></div>
+    <div class="frow">
+      <div class="fgrp"><div class="flbl">Restaurant Name</div><input class="finp" id="pl-name" placeholder="e.g. Tony's Pizza"></div>
+      <div class="fgrp"><div class="flbl">Owner Name</div><input class="finp" id="pl-owner" placeholder="e.g. Tony Mendez"></div>
+    </div>
+    <div class="frow">
+      <div class="fgrp"><div class="flbl">Address</div><input class="finp" id="pl-addr" placeholder="Street address"></div>
+      <div class="fgrp"><div class="flbl">Contact (phone/email/IG)</div><input class="finp" id="pl-contact" placeholder="e.g. tony@tonys.com"></div>
+    </div>
+    <div class="frow3">
+      <div class="fgrp"><div class="flbl">Status</div>
+        <select class="finp" id="pl-status">
+          <option value="prospecting">On List</option><option value="researched">Researched</option><option value="contacted">Contacted</option>
+          <option value="meeting">Meeting Booked</option><option value="analysis">Rapid Assessment Done</option>
+          <option value="proposal">Proposal Sent</option><option value="won">Client Won ✓</option>
+          <option value="lost">Not Interested</option>
+        </select>
+      </div>
+      <div class="fgrp"><div class="flbl">Est. Monthly Bill ($)</div><input class="finp" id="pl-bill" type="number" placeholder="e.g. 2000"></div>
+      <div class="fgrp"><div class="flbl">Follow-up Date</div><input class="finp" id="pl-followup" type="date"></div>
+    </div>
+    <div class="fgrp"><div class="flbl">Notes</div><input class="finp" id="pl-notes" placeholder="e.g. met at chamber of commerce event, interested in reducing summer bills"></div>
+    <div style="display:flex;gap:.6rem;margin-top:.4rem">
+      <button class="btn btn-v" onclick="addLead()">+ Add Lead</button>
+      <button class="btn btn-muted" onclick="clearLeadForm()">Clear</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;margin-bottom:1.2rem" id="pl-stage-counts"></div>
+  <div class="sh"><div><div class="sh-ti">All Leads</div><div class="sh-sub" id="pl-count-lbl">0 leads tracked</div></div>
+    <div style="display:flex;gap:.5rem">
+      <select class="finp" id="pl-filter" style="font-size:.65rem;padding:.3rem .5rem" onchange="renderPipeline()">
+        <option value="all">All Statuses</option>
+        <option value="prospecting">On List</option><option value="researched">Researched</option><option value="contacted">Contacted</option>
+        <option value="meeting">Meeting Booked</option><option value="analysis">Rapid Assessment Done</option>
+        <option value="proposal">Proposal Sent</option><option value="won">Won</option><option value="lost">Lost</option>
+      </select>
+    </div>
+  </div>
+  <div id="pl-list"></div>
+</div>
+
+<!-- ████ AI ANALYST ████ -->
+<div class="page" id="ai">
+  <div class="pg-ey">BillDrop · AI Analyst</div>
+  <h1 class="pgt">Your personal<br><em>energy AI.</em></h1>
+  <p class="pgd">This is what EnergyStar can never give you. An AI that knows your clients, writes your reports, drafts your cold emails, and answers any energy question — in seconds.</p>
+
+  <div class="ai-panel" style="margin-bottom:1.2rem">
+    <div class="ai-header">
+      <div class="ai-ic">✍️</div>
+      <div><div class="ai-title">Report Narrative Writer</div><div class="ai-sub">Select a property → AI writes the full analysis section of your report</div></div>
+    </div>
+    <div class="fgrp"><div class="flbl">Select Property</div>
+      <select class="finp" id="ai-report-prop" style="max-width:280px"><option value="">— Select a property —</option></select>
+    </div>
+    <div class="fgrp"><div class="flbl">Tone</div>
+      <select class="finp" id="ai-report-tone" style="max-width:280px">
+        <option value="professional">Professional & Direct</option>
+        <option value="friendly">Friendly & Approachable</option>
+        <option value="urgent">Urgent — emphasize cost of inaction</option>
+      </select>
+    </div>
+    <div id="ai-report-out" class="ai-out empty" style="margin-bottom:.85rem">Your report narrative will appear here...</div>
+    <div class="ai-btns">
+      <button class="btn btn-v" onclick="aiWriteReport()">🧠 Write Report Narrative</button>
+      <button class="copy-btn" onclick="copySection('ai-report-out')" style="display:inline-flex;align-items:center">Copy</button>
+    </div>
+  </div>
+
+  <div class="ai-panel" style="margin-bottom:1.2rem">
+    <div class="ai-header">
+      <div class="ai-ic">📧</div>
+      <div><div class="ai-title">Cold Email Generator</div><div class="ai-sub">Select a pipeline lead → AI writes a personalized outreach email</div></div>
+    </div>
+    <div class="fgrp"><div class="flbl">Select Lead from Pipeline</div>
+      <select class="finp" id="ai-email-lead" style="max-width:280px"><option value="">— Select a lead —</option></select>
+    </div>
+    <div class="fgrp"><div class="flbl">Angle</div>
+      <select class="finp" id="ai-email-angle" style="max-width:280px">
+        <option value="savings">Lead with savings ($$ they could gain)</option>
+        <option value="loss">Lead with loss (what they're bleeding monthly)</option>
+        <option value="benchmark">Lead with benchmark (how they compare)</option>
+        <option value="story">Lead with story (similar restaurant example)</option>
+      </select>
+    </div>
+    <div id="ai-email-out" class="ai-out empty" style="margin-bottom:.85rem">Your cold email will appear here...</div>
+    <div class="ai-btns">
+      <button class="btn btn-v" onclick="aiWriteEmail()">📧 Generate Cold Email</button>
+      <button class="copy-btn" onclick="copySection('ai-email-out')">Copy</button>
+    </div>
+  </div>
+
+  <div class="ai-panel" style="margin-bottom:1.2rem">
+    <div class="ai-header">
+      <div class="ai-ic">🎯</div>
+      <div><div class="ai-title">Weekly Strategy Advisor</div><div class="ai-sub">AI reviews your full portfolio and pipeline — tells you exactly what to do this week</div></div>
+    </div>
+    <div id="ai-strategy-out" class="ai-out empty" style="margin-bottom:.85rem">Your weekly strategy will appear here...</div>
+    <div class="ai-btns">
+      <button class="btn btn-v" onclick="aiStrategy()">⚡ Get This Week's Strategy</button>
+      <button class="copy-btn" onclick="copySection('ai-strategy-out')">Copy</button>
+    </div>
+  </div>
+
+  <div class="ai-panel">
+    <div class="ai-header">
+      <div class="ai-ic">💬</div>
+      <div><div class="ai-title">Energy Consulting Mentor</div><div class="ai-sub">Ask anything — energy benchmarks, how to answer objections, what a number means, how to price a job</div></div>
+    </div>
+    <div class="fgrp">
+      <textarea class="finp" id="ai-chat-inp" placeholder="e.g. What does a kWh/sqft of 52 mean for a restaurant? Is that bad? How do I explain it to the owner?" style="height:80px;resize:vertical"></textarea>
+    </div>
+    <div id="ai-chat-out" class="ai-out empty" style="margin-bottom:.85rem">Answer will appear here...</div>
+    <div class="ai-btns">
+      <button class="btn btn-v" onclick="aiChat()">Ask Mentor</button>
+      <button class="copy-btn" onclick="copySection('ai-chat-out')">Copy</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ████ REFERRAL PARTNERS ████ -->
+<div class="page" id="referral">
+  <div class="pg-ey">BillDrop Portfolio Manager</div>
+  <h1 class="pgt">Referral<br><em>Partners</em></h1>
+  <p class="pgd">One HVAC company that sends you restaurant clients every month is worth more than 100 cold emails. Build this network. Track it. Reward it. This is how the business scales without you doing all the work.</p>
+
+  <div style="background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.2);border-radius:13px;padding:1rem 1.2rem;margin-bottom:1.4rem;">
+    <div style="font-size:.8rem;font-weight:700;color:var(--volt);margin-bottom:.4rem;">📋 THE REFERRAL DEAL — SAY THIS EXACTLY</div>
+    <div style="font-size:.82rem;color:#dce3f5;line-height:1.7;">"I work with independent restaurants in Denver on energy intelligence. When I identify problems, my clients often need HVAC work, electrical work, or equipment upgrades. I send those clients directly to you. In return, if any of your restaurant clients could use my analysis — I pay you 12% of whatever they pay me. A $299 report = $35.88 in your pocket for a 30-second introduction. Want to set that up?"</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.4rem;">
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:1rem;text-align:center;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;" id="rp-count">0</div>
+      <div style="font-size:.72rem;color:#555;margin-top:.3rem;">Active Partners</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:1rem;text-align:center;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;" id="rp-referrals">0</div>
+      <div style="font-size:.72rem;color:#555;margin-top:.3rem;">Referrals Received</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:1rem;text-align:center;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;" id="rp-commissions">$0</div>
+      <div style="font-size:.72rem;color:#555;margin-top:.3rem;">Commissions Paid</div>
+    </div>
+  </div>
+
+  <!-- ADD PARTNER -->
+  <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.2rem;margin-bottom:1.4rem;">
+    <div style="font-size:.9rem;font-weight:700;color:#fff;margin-bottom:.8rem;">+ Add Referral Partner</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.6rem;">
+      <input id="rp-name" placeholder="Company name" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;" />
+      <select id="rp-type" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;">
+        <option value="hvac">HVAC Company</option>
+        <option value="electrical">Electrician</option>
+        <option value="equipment">Equipment Supplier</option>
+        <option value="plumbing">Plumbing</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.6rem;">
+      <input id="rp-contact" placeholder="Contact name" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;" />
+      <input id="rp-phone" placeholder="Phone / email" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.8rem;">
+      <select id="rp-status" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;">
+        <option value="prospect">Prospect — not contacted</option>
+        <option value="contacted">Contacted — no deal yet</option>
+        <option value="agreed">Deal agreed — active partner</option>
+        <option value="inactive">Inactive</option>
+      </select>
+      <input id="rp-referrals-in" type="number" placeholder="Referrals sent to me so far" min="0" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:var(--volt);font-size:.82rem;font-family:'Space Mono',monospace;width:100%;" />
+    </div>
+    <button onclick="rpAdd()" style="background:var(--volt);color:#000;border:none;border-radius:9px;padding:.55rem 1.4rem;font-size:.82rem;font-weight:700;cursor:pointer;">+ Add Partner</button>
+  </div>
+
+  <div id="rp-list"><div style="color:#555;text-align:center;padding:2rem;font-size:.85rem;">No referral partners yet. One HVAC company can replace 60 cold emails. Start here.</div></div>
+</div>
+
+<!-- ████ CASE STUDIES ████ -->
+<div class="page" id="casestudies">
+  <div class="pg-ey">BillDrop Portfolio Manager</div>
+  <h1 class="pgt">Case<br><em>Studies</em></h1>
+  <p class="pgd">After every report delivered, build a case study here. By client 5, you have a proof library that closes deals for you. By client 10, you're a legitimate business with documented results.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.4rem;">
+    <div style="background:var(--card);border:1px solid rgba(0,212,170,.2);border-radius:13px;padding:1rem;text-align:center;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;" id="cs-count">0</div>
+      <div style="font-size:.72rem;color:#555;margin-top:.3rem;">Case Studies</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:1rem;text-align:center;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;" id="cs-total">$0</div>
+      <div style="font-size:.72rem;color:#555;margin-top:.3rem;">Total Waste Found</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:1rem;text-align:center;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;" id="cs-avg">$0</div>
+      <div style="font-size:.72rem;color:#555;margin-top:.3rem;">Avg Monthly Waste</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:1rem;text-align:center;">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;" id="cs-testimonials">0</div>
+      <div style="font-size:.72rem;color:#555;margin-top:.3rem;">With Testimonial</div>
+    </div>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.2rem;margin-bottom:1.4rem;">
+    <div style="font-size:.9rem;font-weight:700;color:#fff;margin-bottom:.8rem;">+ Build a Case Study</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-bottom:.6rem;">
+      <input id="cs-name" placeholder="Restaurant name" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;" />
+      <input id="cs-type" placeholder="Type (Full service, Cafe...)" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;" />
+      <input id="cs-sqft" placeholder="Square footage" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-bottom:.6rem;">
+      <input id="cs-bill-before" type="number" placeholder="Monthly bill before ($)" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;" />
+      <input id="cs-waste-found" type="number" placeholder="Monthly waste found ($)" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:var(--volt);font-family:'Space Mono',monospace;font-size:.82rem;width:100%;" />
+      <input id="cs-top-leak" placeholder="Biggest leak (e.g. HVAC $240/mo)" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;" />
+    </div>
+    <div style="margin-bottom:.6rem;">
+      <textarea id="cs-testimonial" placeholder="Client testimonial (use their exact words)" style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:.5rem .7rem;color:#fff;font-size:.82rem;width:100%;min-height:65px;resize:vertical;"></textarea>
+    </div>
+    <div style="display:flex;gap:.8rem;align-items:center;margin-bottom:.6rem;">
+      <label style="font-size:.78rem;color:#555;">Permission:</label>
+      <select id="cs-permission" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:.4rem .6rem;color:#fff;font-size:.78rem;">
+        <option value="yes">✅ Full permission — name + quote</option>
+        <option value="anon">🔒 Anonymous only</option>
+        <option value="no">❌ No permission yet — ask later</option>
+      </select>
+      <select id="cs-monitoring" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:.4rem .6rem;color:#fff;font-size:.78rem;margin-left:.5rem;">
+        <option value="no">Monitoring: not signed up</option>
+        <option value="yes">✅ Monitoring: $129/mo active</option>
+      </select>
+    </div>
+    <button onclick="csAdd()" style="background:var(--volt);color:#000;border:none;border-radius:9px;padding:.55rem 1.4rem;font-size:.82rem;font-weight:700;cursor:pointer;">+ Save Case Study</button>
+  </div>
+
+  <div id="cs-list"><div style="color:#555;text-align:center;padding:2rem;font-size:.85rem;">No case studies yet. First client result goes here. This becomes your pitch weapon.</div></div>
+</div>
+
+<!-- ████ REVENUE FORECASTER ████ -->
+<div class="page" id="forecaster">
+  <div class="pg-ey">BillDrop Portfolio Manager</div>
+  <h1 class="pgt">Revenue<br><em>Forecaster</em></h1>
+  <p class="pgd">Move the sliders. See the math. This is what it actually takes to hit $1,000/month, $3,000/month, $25K/year. No guessing. No optimism. Just the numbers.</p>
+
+  <!-- SLIDERS -->
+  <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.4rem;margin-bottom:1.4rem;">
+    <div style="font-size:.9rem;font-weight:700;color:#fff;margin-bottom:1.2rem;">🎛 Adjust Your Numbers</div>
+    <div style="display:grid;gap:1.2rem;">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+          <label style="font-size:.82rem;color:#dce3f5;">Reports per month</label>
+          <span style="font-size:.9rem;font-weight:700;color:var(--volt);font-family:'Space Mono',monospace;" id="fc-reports-val">4</span>
+        </div>
+        <input type="range" id="fc-reports" min="0" max="20" value="4" style="width:100%;accent-color:var(--volt);" oninput="fcCalc()" />
+        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#444;margin-top:.2rem;"><span>0</span><span>20</span></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+          <label style="font-size:.82rem;color:#dce3f5;">Report price ($)</label>
+          <span style="font-size:.9rem;font-weight:700;color:var(--volt);font-family:'Space Mono',monospace;" id="fc-price-val">$199</span>
+        </div>
+        <input type="range" id="fc-price" min="199" max="499" step="50" value="199" style="width:100%;accent-color:var(--volt);" oninput="fcCalc()" />
+        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#444;margin-top:.2rem;"><span>$199</span><span>$499</span></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+          <label style="font-size:.82rem;color:#dce3f5;">Monitoring clients (active)</label>
+          <span style="font-size:.9rem;font-weight:700;color:var(--volt);font-family:'Space Mono',monospace;" id="fc-monitoring-val">0</span>
+        </div>
+        <input type="range" id="fc-monitoring" min="0" max="50" value="0" style="width:100%;accent-color:var(--volt);" oninput="fcCalc()" />
+        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#444;margin-top:.2rem;"><span>0</span><span>50</span></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+          <label style="font-size:.82rem;color:#dce3f5;">Referral deals per month (12% of $299 avg)</label>
+          <span style="font-size:.9rem;font-weight:700;color:var(--volt);font-family:'Space Mono',monospace;" id="fc-referrals-val">0</span>
+        </div>
+        <input type="range" id="fc-referrals" min="0" max="20" value="0" style="width:100%;accent-color:var(--volt);" oninput="fcCalc()" />
+        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#444;margin-top:.2rem;"><span>0</span><span>20</span></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+          <label style="font-size:.82rem;color:#dce3f5;">Rebate consultations per month (15% of avg $1,200 rebate)</label>
+          <span style="font-size:.9rem;font-weight:700;color:var(--volt);font-family:'Space Mono',monospace;" id="fc-rebates-val">0</span>
+        </div>
+        <input type="range" id="fc-rebates" min="0" max="10" value="0" style="width:100%;accent-color:var(--volt);" oninput="fcCalc()" />
+        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#444;margin-top:.2rem;"><span>0</span><span>10</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.4rem;">
+    <div style="background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.3);border-radius:14px;padding:1.4rem;text-align:center;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#555;margin-bottom:.4rem;">Monthly Revenue</div>
+      <div style="font-size:2.4rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;" id="fc-monthly">$0</div>
+      <div style="font-size:.75rem;color:#555;margin-top:.3rem;" id="fc-monthly-sub"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.4rem;text-align:center;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#555;margin-bottom:.4rem;">Annual Revenue</div>
+      <div style="font-size:2.4rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;" id="fc-annual">$0</div>
+      <div style="font-size:.75rem;color:#555;margin-top:.3rem;" id="fc-annual-sub"></div>
+    </div>
+  </div>
+
+  <!-- BREAKDOWN -->
+  <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.2rem;margin-bottom:1.4rem;">
+    <div style="font-size:.85rem;font-weight:700;color:#fff;margin-bottom:.8rem;">Revenue Breakdown</div>
+    <div id="fc-breakdown" style="font-size:.82rem;color:#dce3f5;line-height:2;font-family:'Space Mono',monospace;"></div>
+  </div>
+
+  <!-- MILESTONE TARGETS -->
+  <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.2rem;">
+    <div style="font-size:.85rem;font-weight:700;color:#fff;margin-bottom:.8rem;">🎯 What It Takes To Hit Each Milestone</div>
+    <div style="display:grid;gap:.6rem;" id="fc-milestones">
+      <div style="background:var(--bg);border-radius:11px;padding:.8rem;border-left:3px solid var(--volt);">
+        <div style="font-weight:700;color:var(--volt);font-size:.85rem;">$1,000/month</div>
+        <div style="font-size:.78rem;color:#888;margin-top:.2rem;">5× $199 reports. That's 5 Rapid Assessment calls converted. 20–25 outreach messages to get there at average conversion.</div>
+      </div>
+      <div style="background:var(--bg);border-radius:11px;padding:.8rem;border-left:3px solid #3dffa0;">
+        <div style="font-weight:700;color:#3dffa0;font-size:.85rem;">$3,000/month</div>
+        <div style="font-size:.78rem;color:#888;margin-top:.2rem;">10 monitoring clients ($1,290) + 5 reports at $299 ($1,495) + 1-2 referrals ($108). Achievable by Month 5.</div>
+      </div>
+      <div style="background:var(--bg);border-radius:11px;padding:.8rem;border-left:3px solid #3a8fff;">
+        <div style="font-weight:700;color:#3a8fff;font-size:.85rem;">$25,000/year ($2,083/mo avg)</div>
+        <div style="font-size:.78rem;color:#888;margin-top:.2rem;">Mix of reports, monitoring ($129×10), referral commissions, and 2-3 rebate consultations. Year 1 target — entirely achievable.</div>
+      </div>
+      <div style="background:var(--bg);border-radius:11px;padding:.8rem;border-left:3px solid #ffaa35;">
+        <div style="font-weight:700;color:#ffaa35;font-size:.85rem;">$80,000/year ($6,667/mo avg)</div>
+        <div style="font-size:.78rem;color:#888;margin-top:.2rem;">30 monitoring clients ($3,870) + 10 reports/mo at $299 ($2,990) + referral network + rebates. Year 2 target with referral engine running.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+<div id="vpm-toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// BILLDROP PORTFOLIO MANAGER — CORE JS
+// ══════════════════════════════════════
+
+// ── BACKGROUND ──
+(function initBg(){
+  const c = document.getElementById('vbg');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  let W = c.width = window.innerWidth, H = c.height = window.innerHeight;
+
+  const particles = Array.from({length:80},()=>({
+    x:Math.random()*W, y:Math.random()*H,
+    r:Math.random()*1.2+0.2, speed:Math.random()*0.25+0.05,
+    drift:Math.random()*0.2-0.1, opacity:Math.random()*0.4+0.1
+  }));
+
+  const fogs = Array.from({length:5},(_,i)=>({
+    x:Math.random()*W, y:H*0.3+Math.random()*H*0.7,
+    rx:Math.random()*280+150, ry:Math.random()*100+50,
+    opacity:Math.random()*0.05+0.02,
+    hue:i%2===0?270:200,
+    speed:Math.random()*0.1+0.03, dir:Math.random()>0.5?1:-1
+  }));
+
+  let pulse=0;
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#03030a'; ctx.fillRect(0,0,W,H);
+    // grid
+    ctx.strokeStyle='rgba(160,107,255,0.03)'; ctx.lineWidth=1;
+    for(let x=0;x<W;x+=55){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=55){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    // glow
+    pulse+=0.006;
+    const g=ctx.createRadialGradient(W*0.5,H,0,W*0.5,H,W*0.6);
+    g.addColorStop(0,`rgba(160,107,255,${0.04+Math.sin(pulse)*0.018})`);
+    g.addColorStop(1,'transparent');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    // sidebar glow
+    const sg=ctx.createLinearGradient(0,0,280,0);
+    sg.addColorStop(0,'rgba(160,107,255,0.04)'); sg.addColorStop(1,'transparent');
+    ctx.fillStyle=sg; ctx.fillRect(0,0,W,H);
+    // fog
+    fogs.forEach(f=>{
+      f.x+=f.speed*f.dir;
+      if(f.x>W+f.rx)f.x=-f.rx; if(f.x<-f.rx)f.x=W+f.rx;
+      const fg=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.rx);
+      fg.addColorStop(0,`hsla(${f.hue},80%,55%,${f.opacity})`); fg.addColorStop(1,'transparent');
+      ctx.save(); ctx.scale(1,f.ry/f.rx);
+      ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(f.x,f.y*(f.rx/f.ry),f.rx,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    });
+    // particles
+    particles.forEach(p=>{
+      p.y+=p.speed; p.x+=p.drift;
+      if(p.y>H){p.y=-5;p.x=Math.random()*W;}
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(160,107,255,${p.opacity})`; ctx.fill();
+    });
+    requestAnimationFrame(frame);
+  }
+  frame();
+  window.addEventListener('resize',()=>{W=c.width=window.innerWidth;H=c.height=window.innerHeight;});
+})();
+
+// ── NAVIGATION ──
+function goTo(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  const pg=document.getElementById(id); if(pg)pg.classList.add('on');
+  document.querySelectorAll('.ni').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('on');});
+  if(id==='properties'){renderProperties();setTimeout(addPitchButtons,150);}
+  if(id==='energylog')populatePropSelects();
+  if(id==='benchmarks')populatePropSelects();
+  if(id==='leaks')populatePropSelects();
+  if(id==='reports')populatePropSelects();
+  if(id==='pipeline')renderPipeline();
+  if(id==='ai'){populatePropSelects();populateLeadSelects();}
+  if(id==='dashboard')renderDashboard();
+}
+
+// ── TOAST ──
+function toast(msg){
+  const t=document.getElementById('vpm-toast'); if(!t)return;
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── BENCHMARK DATA (DOE/EnergyStar) ──
+const BENCHMARKS = {
+  restaurant: {label:'Restaurant (Full Service)', avg:38.4, best:22.0, worst:65.0,
+    breakdown:{HVAC:42,Refrigeration:22,Cooking:16,Lighting:13,Other:7}},
+  fastfood:   {label:'Fast Food / QSR',           avg:56.2, best:32.0, worst:90.0,
+    breakdown:{Cooking:35,HVAC:28,Refrigeration:18,Lighting:12,Other:7}},
+  cafe:       {label:'Cafe / Coffee Shop',         avg:28.1, best:16.0, worst:50.0,
+    breakdown:{Refrigeration:30,HVAC:30,Brewing:18,Lighting:14,Other:8}},
+  gym:        {label:'Gym / Fitness Center',       avg:22.3, best:12.0, worst:40.0,
+    breakdown:{HVAC:55,Lighting:22,Equipment:13,HotWater:7,Other:3}},
+  retail:     {label:'Retail Store',               avg:14.2, best:8.0,  worst:28.0,
+    breakdown:{Lighting:42,HVAC:38,Refrigeration:10,Other:10}},
+  medical:    {label:'Medical Office',             avg:25.8, best:14.0, worst:44.0,
+    breakdown:{HVAC:48,Lighting:24,Equipment:18,Other:10}},
+  hotel:      {label:'Hotel / Lodging',            avg:18.9, best:10.0, worst:35.0,
+    breakdown:{HVAC:44,Lighting:18,HotWater:22,Refrigeration:8,Other:8}},
+  other:      {label:'Other Business',             avg:22.0, best:12.0, worst:40.0,
+    breakdown:{HVAC:40,Lighting:30,Other:30}}
+};
+
+// ── SUPABASE CONFIG ──
+const SB_URL = 'https://bqhlyikmwcwdadtltmdz.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxaGx5aWttd2N3ZGFkdGx0bWR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTM3NjIsImV4cCI6MjA5MzE2OTc2Mn0.xl-Jt6BIJ3pKaTxnWbP4sewr5TioD0-G-bgQ0OW9ErU';
+
+function sbH(extra){
+  return Object.assign({
+    'Content-Type':'application/json',
+    'apikey':SB_KEY,
+    'Authorization':'Bearer '+SB_KEY
+  }, extra||{});
+}
+
+function sbTable(key){
+  if(key.startsWith('vpm_energy_')) return 'energy_logs';
+  if(key==='vpm_leads') return 'leads';
+  return 'properties';
+}
+
+// ── STORAGE HELPERS (Supabase) ──
+async function getStore(key){
+  try{
+    const t=sbTable(key);
+    const r=await fetch(SB_URL+'/rest/v1/'+t+'?key=eq.'+encodeURIComponent(key)+'&select=data',{headers:sbH()});
+    const rows=await r.json();
+    if(rows&&rows.length>0&&rows[0].data!==null) return rows[0].data;
+    return null;
+  }catch(e){return null;}
+}
+
+async function setStore(key,val){
+  try{
+    const t=sbTable(key);
+    await fetch(SB_URL+'/rest/v1/'+t,{
+      method:'POST',
+      headers:sbH({'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({key,data:val})
+    });
+  }catch(e){}
+}
+
+async function deleteStore(key){
+  try{
+    const t=sbTable(key);
+    await fetch(SB_URL+'/rest/v1/'+t+'?key=eq.'+encodeURIComponent(key),{
+      method:'DELETE',
+      headers:sbH()
+    });
+  }catch(e){}
+}
+
+// ══════════════════════════════════════
+// PROPERTIES
+// ══════════════════════════════════════
+let properties = [];
+
+async function loadProperties(){
+  properties = (await getStore('vpm_properties')) || [];
+}
+
+async function addProperty(){
+  const name=document.getElementById('p-name').value.trim();
+  if(!name){toast('Enter a business name first');return;}
+  const prop = {
+    id: Date.now(),
+    name, type:document.getElementById('p-type').value,
+    address:document.getElementById('p-addr').value.trim(),
+    owner:document.getElementById('p-owner').value.trim(),
+    sqft:parseFloat(document.getElementById('p-sqft').value)||0,
+    avgBill:parseFloat(document.getElementById('p-bill').value)||0,
+    utility:document.getElementById('p-util').value.trim(),
+    hours:parseFloat(document.getElementById('p-hours').value)||0,
+    staff:parseFloat(document.getElementById('p-staff').value)||0,
+    notes:document.getElementById('p-notes').value.trim(),
+    added:new Date().toISOString()
+  };
+  properties.push(prop);
+  await setStore('vpm_properties',properties);
+  clearPropForm();
+  renderProperties();
+  setTimeout(addPitchButtons,100);
+  updateSidebar();
+  toast('Property added: '+name);
+}
+
+function clearPropForm(){
+  ['p-name','p-addr','p-owner','p-sqft','p-bill','p-util','p-hours','p-staff','p-notes'].forEach(id=>{
+    const el=document.getElementById(id); if(el)el.value='';
+  });
+}
+
+function renderProperties(){
+  const grid=document.getElementById('prop-grid'); if(!grid)return;
+  const lbl=document.getElementById('prop-count-lbl');
+  if(lbl)lbl.textContent=properties.length+' propert'+(properties.length===1?'y':'ies');
+  if(!properties.length){grid.innerHTML='<div style="font-size:.75rem;color:var(--muted);font-style:italic;padding:.5rem 0">No properties yet. Add your first client above.</div>';return;}
+  grid.innerHTML=properties.map(p=>{
+    const bm=BENCHMARKS[p.type]||BENCHMARKS.restaurant;
+    const annualKwh=p.avgBill>0&&p.sqft>0?(p.avgBill*12/0.13):0;
+    const intensity=p.sqft>0?annualKwh/p.sqft:0;
+    const score=intensity>0?Math.max(1,Math.min(100,Math.round(100-(intensity-bm.best)/(bm.worst-bm.best)*100))):0;
+    const scoreColor=score>=70?'var(--green)':score>=45?'var(--amber)':'var(--red)';
+    const waste=p.sqft>0&&p.avgBill>0?Math.max(0,Math.round((intensity-bm.avg)/bm.avg*p.avgBill)):0;
+    const _sh=score>0?'<div style="text-align:right"><div class="pc-score" style="color:'+scoreColor+'">'+score+'</div><div class="pc-score-lbl">/ 100</div></div>':'';
+    const _sf=p.sqft?'<div class="pc-m"><span>'+p.sqft.toLocaleString()+'</span> sq ft</div>':'';
+    const _sb=p.avgBill?'<div class="pc-m"><span>$'+p.avgBill.toLocaleString()+'</span>/mo avg</div>':'';
+    const _so=p.owner?'<div class="pc-m"><span>'+p.owner+'</span></div>':'';
+    const _sw=waste>0?'<div class="pc-m" style="color:var(--red)"><span>~$'+waste+'/mo</span> est. waste</div>':'';
+    const _sa=p.address?'<div style="font-size:.62rem;color:var(--muted);margin-bottom:.65rem">'+p.address+'</div>':'';
+    return `<div class="prop-card" id="pc-${p.id}">
+      <div class="pc-top"><div><div class="pc-name">${p.name}</div><div class="pc-type">${bm.label}</div></div>${_sh}</div>
+      <div class="pc-meta">${_sf}${_sb}${_so}${_sw}</div>
+      ${_sa}
+      <div class="pc-actions">
+        <button class="btn btn-t" style="font-size:.6rem;padding:.32rem .7rem" onclick="goToLog(${p.id})">Log Data</button>
+        <button class="btn btn-v" style="font-size:.6rem;padding:.32rem .7rem" onclick="goToAI(${p.id})">AI Analyze</button>
+        <button class="btn btn-r" style="font-size:.6rem;padding:.32rem .7rem" onclick="deleteProperty(${p.id})">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteProperty(id){
+  if(!confirm('Delete this property and all its data?'))return;
+  properties=properties.filter(p=>p.id!==id);
+  await setStore('vpm_properties',properties);
+  // also delete energy logs
+  await deleteStore('vpm_energy_'+id);
+  renderProperties();
+  updateSidebar();
+  toast('Property deleted');
+}
+
+function goToLog(id){
+  goTo('energylog');
+  setTimeout(()=>{
+    const sel=document.getElementById('el-prop-sel');
+    if(sel){sel.value=id;loadEnergyLog();}
+  },100);
+}
+
+function goToAI(id){
+  goTo('ai');
+  setTimeout(()=>{
+    const sel=document.getElementById('ai-report-prop');
+    if(sel)sel.value=id;
+  },100);
+}
+
+// ══════════════════════════════════════
+// ENERGY LOG
+// ══════════════════════════════════════
+let currentPropId = null;
+let energyEntries = [];
+
+async function loadEnergyLog(){
+  const sel=document.getElementById('el-prop-sel'); if(!sel)return;
+  const id=parseInt(sel.value);
+  if(!id){document.getElementById('el-form-wrap').style.display='none';document.getElementById('el-empty').style.display='block';return;}
+  currentPropId=id;
+  const prop=properties.find(p=>p.id===id);
+  const info=document.getElementById('el-prop-info');
+  if(info&&prop)info.textContent=prop.address||'';
+  document.getElementById('el-form-wrap').style.display='block';
+  document.getElementById('el-empty').style.display='none';
+  energyEntries=(await getStore('vpm_energy_'+id))||[];
+  renderEnergyTable();
+}
+
+async function saveEnergyEntry(){
+  const month=document.getElementById('el-month').value;
+  const year=document.getElementById('el-year').value;
+  const kwh=parseFloat(document.getElementById('el-kwh').value)||0;
+  const cost=parseFloat(document.getElementById('el-cost').value)||0;
+  const peak=parseFloat(document.getElementById('el-peak').value)||0;
+  const note=document.getElementById('el-note').value.trim();
+  if(!kwh&&!cost){toast('Enter at least kWh or cost');return;}
+  const key=year+'-'+month;
+  const rate=kwh>0&&cost>0?Math.round((cost/kwh)*1000)/1000:0;
+  const existing=energyEntries.findIndex(e=>e.key===key);
+  const entry={key,month,year,kwh,cost,peak,rate,note,saved:Date.now()};
+  if(existing>=0)energyEntries[existing]=entry;
+  else energyEntries.push(entry);
+  energyEntries.sort((a,b)=>a.key.localeCompare(b.key));
+  await setStore('vpm_energy_'+currentPropId,energyEntries);
+  renderEnergyTable();
+  clearElForm();
+  toast('Month saved: '+month+'/'+year);
+}
+
+function clearElForm(){
+  ['el-kwh','el-cost','el-peak','el-rate','el-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+function renderEnergyTable(){
+  const tbody=document.getElementById('el-tbody'); if(!tbody)return;
+  const countEl=document.getElementById('el-months-count');
+  if(countEl)countEl.textContent=energyEntries.length+' month'+(energyEntries.length===1?'':'s')+' logged';
+  // month grid
+  const mgEl=document.getElementById('el-month-grid');
+  if(mgEl){
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const yr=new Date().getFullYear();
+    let html='';
+    for(let m=1;m<=12;m++){
+      const key=yr+'-'+(m<10?'0':'')+m;
+      const entry=energyEntries.find(e=>e.key===key);
+      html+=`<div class="month-chip ${entry?'has-data':''}">
+        <div class="mc-mo">${months[m-1]}</div>
+        <div class="mc-kwh">${entry?entry.kwh.toLocaleString():'—'}</div>
+      </div>`;
+    }
+    mgEl.innerHTML=html;
+  }
+  if(!energyEntries.length){tbody.innerHTML='<tr><td colspan="8" style="color:var(--muted);font-style:italic;text-align:center;padding:1.2rem">No months logged yet</td></tr>';return;}
+  const avgKwh=energyEntries.reduce((s,e)=>s+e.kwh,0)/energyEntries.length;
+  tbody.innerHTML=energyEntries.slice().reverse().map(e=>{
+    const diff=avgKwh>0?Math.round((e.kwh-avgKwh)/avgKwh*100):0;
+    const diffColor=diff>15?'var(--red)':diff>5?'var(--amber)':'var(--green)';
+    return `<tr>
+      <td><strong style="color:#fff">${e.month}/${e.year}</strong></td>
+      <td>${e.kwh?e.kwh.toLocaleString():'-'}</td>
+      <td>${e.cost?'$'+e.cost.toLocaleString():'-'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:.65rem">${e.rate?'$'+e.rate:'-'}</td>
+      <td>${e.peak||'-'}</td>
+      <td style="color:${diffColor};font-family:'Space Mono',monospace;font-size:.65rem">${diff>0?'+':''}${diff}%</td>
+      <td style="color:var(--muted);font-size:.65rem">${e.note||''}</td>
+      <td><button class="btn btn-r" style="font-size:.55rem;padding:.2rem .45rem" onclick="deleteEntry('${e.key}')">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function deleteEntry(key){
+  energyEntries=energyEntries.filter(e=>e.key!==key);
+  await setStore('vpm_energy_'+currentPropId,energyEntries);
+  renderEnergyTable();
+  toast('Entry deleted');
+}
+
+// ══════════════════════════════════════
+// BENCHMARKS
+// ══════════════════════════════════════
+async function runBenchmark(){
+  const sel=document.getElementById('bm-prop-sel'); if(!sel)return;
+  const id=parseInt(sel.value);
+  const res=document.getElementById('bm-results');
+  const empty=document.getElementById('bm-empty');
+  if(!id){res.style.display='none';empty.style.display='block';return;}
+  const prop=properties.find(p=>p.id===id);
+  if(!prop){return;}
+  const entries=(await getStore('vpm_energy_'+id))||[];
+  if(!entries.length||!prop.sqft){
+    empty.style.display='block';
+    empty.textContent='This property needs square footage and at least 1 month of data logged.';
+    res.style.display='none';return;
+  }
+  res.style.display='block'; empty.style.display='none';
+  const bm=BENCHMARKS[prop.type]||BENCHMARKS.restaurant;
+  const avgMonthlyKwh=entries.reduce((s,e)=>s+e.kwh,0)/entries.length;
+  const annualKwh=avgMonthlyKwh*12;
+  const intensity=annualKwh/prop.sqft;
+  const score=Math.max(1,Math.min(100,Math.round(100-(intensity-bm.best)/(bm.worst-bm.best)*100)));
+  const scoreColor=score>=70?'#3dffa0':score>=45?'#ffaa35':'#ff3d6b';
+  // bars — normalize to worst as 100%
+  const normThis=Math.min(intensity/bm.worst*100,100);
+  const normAvg=bm.avg/bm.worst*100;
+  const normBest=bm.best/bm.worst*100;
+  document.getElementById('bm-this-bar').style.width=normThis+'%';
+  document.getElementById('bm-this-bar').style.background=scoreColor;
+  document.getElementById('bm-avg-bar').style.width=normAvg+'%';
+  document.getElementById('bm-best-bar').style.width=normBest+'%';
+  document.getElementById('bm-avg-line').style.left=normAvg+'%';
+  document.getElementById('bm-this-val').textContent=intensity.toFixed(1)+' kWh/sqft';
+  document.getElementById('bm-avg-val').textContent=bm.avg+' avg';
+  document.getElementById('bm-best-val').textContent=bm.best+' best';
+  // score ring
+  const arc=document.getElementById('bm-score-arc');
+  const circumference=289;
+  arc.style.strokeDashoffset=circumference-(score/100*circumference);
+  arc.style.stroke=scoreColor;
+  const sv=document.getElementById('bm-score-val');
+  sv.textContent=score; sv.style.color=scoreColor;
+  // verdict
+  const overUnder=((intensity-bm.avg)/bm.avg*100).toFixed(0);
+  const monthlyWaste=Math.max(0,Math.round((intensity-bm.avg)/bm.avg*(prop.avgBill||entries[entries.length-1]?.cost||0)));
+  const vEl=document.getElementById('bm-verdict');
+  if(intensity<=bm.avg){
+    vEl.innerHTML=`<span style="color:var(--green)">✓ Below average.</span> This property uses <strong>${Math.abs(overUnder)}%</strong> less energy than similar ${bm.label.toLowerCase()} businesses. Still room to improve vs best-in-class (${bm.best} kWh/sqft).`;
+  } else {
+    vEl.innerHTML=`<span style="color:var(--red)">⚠ Above average.</span> This property uses <strong>${overUnder}%</strong> more than similar ${bm.label.toLowerCase()} businesses — an estimated <strong style="color:var(--red)">$${monthlyWaste}/month</strong> in preventable waste. Year 1 savings potential: <strong style="color:var(--green)">$${(monthlyWaste*12*0.7).toFixed(0)}–$${(monthlyWaste*12).toFixed(0)}</strong>.`;
+  }
+  // breakdown
+  const bdEl=document.getElementById('bm-breakdown');
+  bdEl.innerHTML=Object.entries(bm.breakdown).map(([cat,pct])=>{
+    const estKwh=Math.round(avgMonthlyKwh*(pct/100));
+    const estCost=entries.length?Math.round((entries[entries.length-1].cost||prop.avgBill||0)*(pct/100)):0;
+    return `<div class="bm-row">
+      <div class="bm-lbl">${cat}</div>
+      <div class="bm-track"><div class="bm-fill" style="width:${pct}%;background:var(--volt)"></div></div>
+      <div class="bm-val" style="min-width:120px;font-size:.6rem">${pct}% · ~${estKwh.toLocaleString()} kWh${estCost?(' · $'+estCost):''}</div>
+    </div>`;
+  }).join('');
+  // insight
+  const insightEl=document.getElementById('bm-insight');
+  const pitchWaste=monthlyWaste>0?`$${monthlyWaste}/month ($${(monthlyWaste*12).toLocaleString()}/year)`:'more than necessary';
+    const _vsAvg=overUnder>0?overUnder+'% above average':'efficiently';
+  const _wm1=monthlyWaste>0?'That gap = <strong style="color:var(--red)">'+pitchWaste+'</strong> above peers.':"You're in good shape, but there's room to improve.";
+  const _wm2=monthlyWaste>0?'Top fix areas: '+Object.keys(bm.breakdown)[0]+', '+Object.keys(bm.breakdown)[1]+'.':'';
+  const _stxt=score>=70?'Strong':score>=45?'Average':'Poor (high opportunity)';
+  insightEl.innerHTML='<strong style="color:#fff">Pitch script:</strong><br><br>'
+    +'"We found that '+prop.name+' uses '+intensity.toFixed(1)+' kWh/sqft/yr. '
+    +'Industry avg for this type is '+bm.avg+' kWh/sqft — you\'re running '+_vsAvg+'. '
+    +_wm1+' '+_wm2+'"<br><br>'
+    +'<span style="color:var(--muted)">Score: '+_stxt+'</span>';
+}
+
+// ══════════════════════════════════════
+// COST LEAKS
+// ══════════════════════════════════════
+async function runLeakAnalysis(){
+  const sel=document.getElementById('lk-prop-sel'); if(!sel)return;
+  const id=parseInt(sel.value); if(!id)return;
+  const prop=properties.find(p=>p.id===id); if(!prop)return;
+  document.getElementById('lk-bill').value=prop.avgBill||'';
+  document.getElementById('lk-sqft').value=prop.sqft||'';
+  document.getElementById('lk-type').value=prop.type||'restaurant';
+  calcLeaks();
+}
+
+function calcLeaks(){
+  const bill=parseFloat(document.getElementById('lk-bill').value)||0;
+  const sqft=parseFloat(document.getElementById('lk-sqft').value)||0;
+  const type=document.getElementById('lk-type').value;
+  const hvacAge=parseFloat(document.getElementById('lk-hvac-age').value)||7;
+  const lighting=document.getElementById('lk-lighting').value;
+  const peakTariff=document.getElementById('lk-peak-tariff').value;
+  if(!bill){toast('Enter a monthly bill amount');return;}
+  const bm=BENCHMARKS[type]||BENCHMARKS.restaurant;
+  const leaks=[];
+  // HVAC leak
+  const hvacShare=bm.breakdown.HVAC||42;
+  const hvacBill=bill*(hvacShare/100);
+  const hvacWastePct=Math.min(0.35,hvacAge>15?0.35:hvacAge>10?0.22:hvacAge>7?0.14:0.06);
+  const hvacWaste=Math.round(hvacBill*hvacWastePct);
+  if(hvacWaste>0)leaks.push({name:'HVAC Inefficiency',waste:hvacWaste,why:`Unit is ${hvacAge} year${hvacAge===1?'':'s'} old. Every year past 10 adds ~3-5% waste. Scheduling misalignment adds another 8-15% on top.`,tier:hvacAge>10?1:2});
+  // Lighting
+  const lightShare=bm.breakdown.Lighting||13;
+  const lightBill=bill*(lightShare/100);
+  const lightWastePct=lighting==='incandescent'?0.65:lighting==='fluorescent'?0.35:lighting==='mixed'?0.2:0.03;
+  const lightWaste=Math.round(lightBill*lightWastePct);
+  if(lightWaste>20)leaks.push({name:'Lighting Waste',waste:lightWaste,why:lighting==='led'?'LED is efficient, but improper controls (timers/sensors) still waste 3-5%.':lighting==='incandescent'?'Incandescent bulbs waste 65% of energy as heat. LED upgrade pays back in 4-8 months.':'Switching to full LED reduces lighting costs by 50-65%.',tier:lighting==='led'?3:1});
+  // Peak tariff
+  if(peakTariff==='yes'||peakTariff==='unknown'){
+    const peakWaste=Math.round(bill*0.12);
+    leaks.push({name:'Peak-Hour Exposure',waste:peakWaste,why:'Businesses on time-of-use tariffs pay 2-3x more per kWh during peak hours (typically 4-9pm). Load-shifting heavy equipment to off-peak saves 10-18% on the bill.',tier:2});
+  }
+  // Refrigeration (restaurants)
+  if(['restaurant','fastfood','cafe'].includes(type)){
+    const refShare=bm.breakdown.Refrigeration||20;
+    const refWaste=Math.round(bill*(refShare/100)*0.18);
+    if(refWaste>30)leaks.push({name:'Refrigeration Leaks',waste:refWaste,why:'Walk-in coolers and commercial fridges lose efficiency from door seal degradation, coil buildup, and thermostat drift. Average waste: 15-22% of refrigeration energy.',tier:2});
+  }
+  // Standby / phantom load
+  const phantomWaste=Math.round(bill*0.06);
+  if(phantomWaste>20)leaks.push({name:'Standby / Phantom Load',waste:phantomWaste,why:'Equipment left on overnight — fryers, heat lamps, display screens, POS systems. Industry average: 5-8% of total bill. Smart strips and checklists fix this at zero cost.',tier:1});
+  // Hot water (restaurants)
+  if(['restaurant','fastfood','cafe','hotel'].includes(type)){
+    const hwWaste=Math.round(bill*0.07);
+    leaks.push({name:'Hot Water Overuse',waste:hwWaste,why:'Water heaters set above 120°F, lack of pipe insulation, and pre-rinse spray valves waste 6-10% of energy. Low-flow pre-rinse heads alone save $200-600/year.',tier:2});
+  }
+  leaks.sort((a,b)=>b.waste-a.waste);
+  const totalMo=leaks.reduce((s,l)=>s+l.waste,0);
+  const totalYr=Math.round(totalMo*12*0.7); // 70% realistically recoverable (BillDrop standard)
+  document.getElementById('lk-results').style.display='block';
+  document.getElementById('lk-total-mo').textContent='$'+totalMo.toLocaleString();
+  document.getElementById('lk-total-yr').textContent='$'+totalYr.toLocaleString();
+  const cardsEl=document.getElementById('lk-cards');
+  cardsEl.innerHTML=leaks.map((l,i)=>`
+    <div class="lk-card">
+      <div class="lk-num">${i+1}</div>
+      <div class="lk-info">
+        <div class="lk-name">${l.name}</div>
+        <div class="lk-why">${l.why}</div>
+        <div style="margin-top:.35rem"><span class="bdg bdg-${l.tier===1?'g':l.tier===2?'a':'m'}">Tier ${l.tier} Fix</span></div>
+      </div>
+      <div class="lk-dollar">
+        <div class="lk-amt">$${l.waste.toLocaleString()}</div>
+        <div class="lk-period">/ month</div>
+        <div style="font-size:.58rem;font-family:'Space Mono',monospace;color:var(--muted);margin-top:.15rem">$${(l.waste*12).toLocaleString()}/yr</div>
+      </div>
+    </div>`).join('');
+  // copy text
+  const copyEl=document.getElementById('lk-copy-text');
+  const _ll=leaks.map(function(l,i){return '#'+(i+1)+' '+l.name+'\nEst. Monthly Loss: $'+l.waste.toLocaleString()+' ($'+(l.waste*12).toLocaleString()+'/yr)\nTier '+l.tier+' Fix\n'+l.why;}).join('\n\n');
+  copyEl.textContent='COST LEAK ANALYSIS\n'+'\u2500'.repeat(40)+'\nEstimated Monthly Waste: $'+totalMo.toLocaleString()+'\nYear 1 Savings Potential: $'+totalYr.toLocaleString()+' (conservative)\n\n'+_ll;
+}
+
+function copyLeaks(){
+  const el=document.getElementById('lk-copy-text');
+  if(el){navigator.clipboard.writeText(el.textContent).then(()=>toast('Copied to clipboard'));} 
+}
+
+// ══════════════════════════════════════
+// REPORT BUILDER
+// ══════════════════════════════════════
+async function buildReport(){
+  const sel=document.getElementById('rb-prop-sel'); if(!sel)return;
+  const id=parseInt(sel.value);
+  if(!id){toast('Select a property first');return;}
+  const prop=properties.find(p=>p.id===id); if(!prop)return;
+  const entries=(await getStore('vpm_energy_'+id))||[];
+  const out=document.getElementById('rb-output');
+  const empty=document.getElementById('rb-empty');
+  if(!entries.length){toast('Log at least 1 month of data first');return;}
+  out.style.display='block'; empty.style.display='none';
+  const bm=BENCHMARKS[prop.type]||BENCHMARKS.restaurant;
+  const avgKwh=Math.round(entries.reduce((s,e)=>s+e.kwh,0)/entries.length);
+  const avgCost=Math.round(entries.reduce((s,e)=>s+e.cost,0)/entries.length);
+  const annualKwh=avgKwh*12;
+  const intensity=prop.sqft>0?(annualKwh/prop.sqft).toFixed(1):null;
+  const score=intensity?Math.max(1,Math.min(100,Math.round(100-(intensity-bm.best)/(bm.worst-bm.best)*100))):null;
+  const overPct=intensity?Math.round((intensity-bm.avg)/bm.avg*100):null;
+  const monthlyWaste=intensity&&overPct>0?Math.round((overPct/100)*avgCost):0;
+  const yr1savings=monthlyWaste?`$${Math.round(monthlyWaste*12*0.65).toLocaleString()}–$${Math.round(monthlyWaste*12*0.9).toLocaleString()}`:'TBD after full analysis';
+  // EXEC
+  document.getElementById('rb-exec').textContent=
+`EXECUTIVE SUMMARY — ${prop.name.toUpperCase()}
+${'─'.repeat(45)}
+Est. Monthly Energy Waste:    $${monthlyWaste.toLocaleString()}
+Year 1 Savings Potential:     ${yr1savings}
+vs. Industry Benchmark:       ${overPct?overPct+'% above average':'At or below average'}
+Energy Score:                 ${score||'—'} / 100
+Analysis Period:              ${entries[0].month}/${entries[0].year} – ${entries[entries.length-1].month}/${entries[entries.length-1].year} (${entries.length} months)`;
+  // BENCHMARK
+  document.getElementById('rb-bm').textContent=
+`BENCHMARK ANALYSIS
+${'─'.repeat(45)}
+Business Type:       ${bm.label}
+Square Footage:      ${prop.sqft?.toLocaleString()||'Not entered'} sq ft
+Average Monthly Use: ${avgKwh.toLocaleString()} kWh
+Annual kWh:          ${annualKwh.toLocaleString()} kWh
+Energy Intensity:    ${intensity||'—'} kWh/sq ft/yr
+Industry Average:    ${bm.avg} kWh/sq ft/yr
+Best in Class:       ${bm.best} kWh/sq ft/yr
+Gap vs. Average:     ${overPct?overPct+'%':'—'}
+Energy Score:        ${score||'—'} / 100
+
+Largest energy users by category:
+${Object.entries(bm.breakdown).map(function(e){return '  '+e[0]+': '+e[1]+'% (~'+Math.round(avgKwh*(e[1]/100)).toLocaleString()+' kWh/mo)';}).join('\n')}in('
+')}`;
+  // LEAKS
+  const hvacAge=7; // default
+  const leakText=`COST LEAK BREAKDOWN
+${'─'.repeat(45)}
+Based on benchmark comparison and property profile:
+${monthlyWaste>0?("Total estimated monthly waste: $"+monthlyWaste.toLocaleString()+"\n"):""}
+Primary leak areas for ${bm.label.toLowerCase()} businesses:
+  #1 HVAC (${bm.breakdown.HVAC||42}% of bill) — scheduling, setpoints, equipment age
+  #2 ${Object.keys(bm.breakdown)[1]} (${Object.values(bm.breakdown)[1]}% of bill) — [enter specific findings]
+  #3 Standby/phantom load — overnight equipment left running
+  #4 Peak-hour exposure — [check if on TOU rate]
+
+Note: Enter specific values after reviewing utility bills in detail.`;
+  document.getElementById('rb-leaks').textContent=leakText;
+  // TREND
+  const maxKwh=Math.max(...entries.map(e=>e.kwh));
+  const minKwh=Math.min(...entries.map(e=>e.kwh));
+  document.getElementById('rb-trend').textContent=
+`MONTHLY ENERGY TREND
+${'─'.repeat(45)}
+${entries.map(e=>{
+  const barLen=Math.round((e.kwh/maxKwh)*20);
+  const bar='█'.repeat(barLen)+'░'.repeat(20-barLen);
+  return e.month+'/'+e.year+'  '+bar+'  '+e.kwh.toLocaleString()+' kWh  $'+e.cost.toLocaleString()+(e.note?' ('+e.note+')':'');
+}).join('\n')}
+
+Peak month:  ${entries.find(e=>e.kwh===maxKwh)?.month}/${entries.find(e=>e.kwh===maxKwh)?.year} — ${maxKwh.toLocaleString()} kWh
+Low month:   ${entries.find(e=>e.kwh===minKwh)?.month}/${entries.find(e=>e.kwh===minKwh)?.year} — ${minKwh.toLocaleString()} kWh
+Variance:    ${Math.round((maxKwh-minKwh)/minKwh*100)}% peak vs low (seasonal pattern)`;
+  // FORECAST
+  document.getElementById('rb-forecast').textContent=
+`SAVINGS FORECAST
+${'─'.repeat(45)}
+Current avg monthly bill:  $${avgCost.toLocaleString()}
+Est. monthly waste:        $${monthlyWaste.toLocaleString()}
+
+Scenario             Month 1    Month 3    Month 6    Year 1
+────────────────────────────────────────────────────────────
+Tier 1 only (no $)   $${Math.round(monthlyWaste*.25).toLocaleString()}      $${Math.round(monthlyWaste*.25*3).toLocaleString()}      $${Math.round(monthlyWaste*.25*6).toLocaleString()}      $${Math.round(monthlyWaste*.25*12).toLocaleString()}
+Tier 1 + 2           $${Math.round(monthlyWaste*.45).toLocaleString()}      $${Math.round(monthlyWaste*.45*3).toLocaleString()}      $${Math.round(monthlyWaste*.45*6).toLocaleString()}      $${Math.round(monthlyWaste*.45*12).toLocaleString()}
+All tiers            $${Math.round(monthlyWaste*.65).toLocaleString()}      $${Math.round(monthlyWaste*.65*3).toLocaleString()}      $${Math.round(monthlyWaste*.65*6).toLocaleString()}      $${Math.round(monthlyWaste*.65*12).toLocaleString()}
+
+Note: Estimates are conservative (60-65% of identified waste).
+Real results depend on implementation and utility rates.`;
+}
+
+function copySection(id){
+  const el=document.getElementById(id); if(!el)return;
+  navigator.clipboard.writeText(el.textContent||el.innerText).then(()=>toast('Copied to clipboard'));
+}
+
+// ══════════════════════════════════════
+// PIPELINE
+// ══════════════════════════════════════
+let leads = [];
+
+async function loadLeads(){ leads=(await getStore('vpm_leads'))||[]; }
+
+async function addLead(){
+  const name=document.getElementById('pl-name').value.trim();
+  if(!name){toast('Enter a restaurant name');return;}
+  const lead={
+    id:Date.now(), name,
+    owner:document.getElementById('pl-owner').value.trim(),
+    address:document.getElementById('pl-addr').value.trim(),
+    contact:document.getElementById('pl-contact').value.trim(),
+    status:document.getElementById('pl-status').value,
+    bill:parseFloat(document.getElementById('pl-bill').value)||0,
+    followup:document.getElementById('pl-followup').value,
+    notes:document.getElementById('pl-notes').value.trim(),
+    added:new Date().toISOString()
+  };
+  leads.push(lead);
+  await setStore('vpm_leads',leads);
+  clearLeadForm();
+  renderPipeline();
+  updateSidebar();
+  toast('Lead added: '+name);
+}
+
+function clearLeadForm(){
+  ['pl-name','pl-owner','pl-addr','pl-contact','pl-bill','pl-followup','pl-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+const STATUS_LABELS={prospecting:'On List',researched:'Researched',contacted:'Contacted',meeting:'Meeting Booked',analysis:'Rapid Assessment Done',proposal:'Proposal Sent',won:'Won ✓',lost:'Not Interested'};
+const STATUS_COLORS={prospecting:'var(--muted)',contacted:'var(--blue)',meeting:'var(--amber)',analysis:'var(--volt)',proposal:'var(--teal)',won:'var(--green)',lost:'var(--red)'};
+
+function renderPipeline(){
+  const listEl=document.getElementById('pl-list'); if(!listEl)return;
+  const filter=document.getElementById('pl-filter')?.value||'all';
+  const lbl=document.getElementById('pl-count-lbl');
+  if(lbl)lbl.textContent=leads.length+' lead'+(leads.length===1?'':'s')+' tracked';
+  // stage counts
+  const stageEl=document.getElementById('pl-stage-counts');
+  if(stageEl){
+    const stages=['prospecting','contacted','meeting','analysis','proposal','won','lost'];
+    stageEl.innerHTML=stages.map(s=>{
+      const cnt=leads.filter(l=>l.status===s).length;
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:.55rem .6rem;text-align:center;border-top:2px solid ${STATUS_COLORS[s]}">
+        <div style="font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:${STATUS_COLORS[s]};line-height:1">${cnt}</div>
+        <div style="font-size:.5rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:.12rem">${STATUS_LABELS[s]}</div>
+      </div>`;
+    }).join('');
+  }
+  const filtered=filter==='all'?leads:leads.filter(l=>l.status===filter);
+  if(!filtered.length){listEl.innerHTML='<div style="font-size:.75rem;color:var(--muted);font-style:italic;padding:.5rem 0">No leads yet. Add your first prospect above.</div>';return;}
+  // sort: won last, then by followup date
+  const sorted=[...filtered].sort((a,b)=>{
+    if(a.status==='won'&&b.status!=='won')return 1;
+    if(b.status==='won'&&a.status!=='won')return-1;
+    if(a.status==='lost'&&b.status!=='lost')return 1;
+    if(b.status==='lost'&&a.status!=='lost')return-1;
+    if(a.followup&&b.followup)return a.followup.localeCompare(b.followup);
+    return 0;
+  });
+  const today=new Date().toISOString().split('T')[0];
+  listEl.innerHTML=sorted.map(l=>{
+    const overdue=l.followup&&l.followup<today&&l.status!=='won'&&l.status!=='lost';
+    const soonFollowup=l.followup&&l.followup>=today&&l.followup<=new Date(Date.now()+7*86400000).toISOString().split('T')[0];
+    const estWaste=l.bill?Math.round(l.bill*0.22):0;
+    const _bc=l.status==='won'?'g':l.status==='lost'?'r':l.status==='proposal'?'t':l.status==='analysis'?'v':'m';
+    const _bo=l.owner?'<span class="bdg bdg-m">&#128100; '+l.owner+'</span>':'';
+    const _bco=l.contact?'<span class="bdg bdg-m">&#128222; '+l.contact+'</span>':'';
+    const _bb=l.bill?'<span class="bdg bdg-a">$'+l.bill.toLocaleString()+'/mo bill</span>':'';
+    const _bw=estWaste>0?'<span class="bdg bdg-r">~$'+estWaste.toLocaleString()+'/mo waste</span>':'';
+    const _fwc=overdue?'255,77,106':soonFollowup?'255,179,71':'74,64,96';
+    const _ftc=overdue?'var(--red)':soonFollowup?'var(--amber)':'var(--muted)';
+    const _fp=overdue?'&#9888; OVERDUE: ':'&#128197; ';
+    const _bf=l.followup?'<span class="bdg" style="background:rgba('+_fwc+',.15);color:'+_ftc+'">'+_fp+l.followup+'</span>':'';
+    const _bn=l.notes?'<div style="font-size:.65rem;color:var(--muted);margin-bottom:.65rem;line-height:1.6">'+l.notes+'</div>':'';
+    const _bso=Object.entries(STATUS_LABELS).map(function(e){return '<option value="'+e[0]+'"'+(l.status===e[0]?' selected':'')+'>'+e[1]+'</option>';}).join('');
+    return `<div class="pl-card pl-${l.status}">
+      <div class="pl-top">
+        <div><div class="pl-name">${l.name}</div><div class="pl-addr">${l.address||'No address entered'}</div></div>
+        <span class="bdg bdg-${_bc}">${STATUS_LABELS[l.status]}</span>
+      </div>
+      <div class="pl-meta">${_bo}${_bco}${_bb}${_bw}${_bf}</div>
+      ${_bn}
+      <div class="pl-actions">
+        <select class="finp" style="font-size:.62rem;padding:.28rem .5rem;width:auto" onchange="updateLeadStatus(${l.id},this.value)">${_bso}</select>
+        <button class="btn btn-t" style="font-size:.58rem;padding:.28rem .6rem" onclick="openCallBrief(${l.id})">&#128222; Call Brief</button>
+        <button class="btn btn-v" style="font-size:.58rem;padding:.28rem .6rem" onclick="generateEmailForLead(${l.id})">Email</button>
+        <button class="btn btn-r" style="font-size:.58rem;padding:.28rem .6rem" onclick="deleteLead(${l.id})">X</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function updateLeadStatus(id,status){
+  const lead=leads.find(l=>l.id===id); if(!lead)return;
+  lead.status=status;
+  await setStore('vpm_leads',leads);
+  renderPipeline();
+  toast('Status updated → '+STATUS_LABELS[status]);
+}
+
+async function deleteLead(id){
+  if(!confirm('Delete this lead?'))return;
+  leads=leads.filter(l=>l.id!==id);
+  await setStore('vpm_leads',leads);
+  renderPipeline();
+  toast('Lead deleted');
+}
+
+
+// ══════════════════════════════════════
+// PRE-CALL BRIEF — Know before you go
+// Forbes Riley principle: preparation
+// turns nerves into confidence.
+// One click → your full game plan.
+// ══════════════════════════════════════
+async function openCallBrief(id){
+  const lead = leads.find(l => l.id === id);
+  if(!lead){ toast('Lead not found'); return; }
+
+  // Build the modal
+  const overlay = document.createElement('div');
+  overlay.id = 'brief-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem;backdrop-filter:blur(6px)';
+
+  const estWaste = lead.bill ? Math.round(lead.bill * 0.22) : null;
+  const estYear  = estWaste  ? estWaste * 12 : null;
+
+  overlay.innerHTML = `
+    <div style="background:#0f0f22;border:1px solid rgba(0,212,170,.25);border-radius:18px;width:100%;max-width:680px;max-height:88vh;overflow-y:auto;padding:2rem 2.2rem;position:relative">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem">
+        <div>
+          <div style="font-size:.55rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.2em;color:var(--teal);margin-bottom:.3rem">Pre-Call Brief</div>
+          <div style="font-family:'Fraunces',serif;font-size:1.55rem;font-weight:900;color:#fff;line-height:1">${lead.name}</div>
+          ${lead.owner ? `<div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">${lead.owner}${lead.contact ? ' · ' + lead.contact : ''}</div>` : ''}
+        </div>
+        <button onclick="document.getElementById('brief-overlay').remove()" style="background:rgba(255,77,106,.1);border:1px solid rgba(255,77,106,.2);border-radius:9px;padding:.4rem .85rem;color:var(--red);cursor:pointer;font-size:.7rem;flex-shrink:0">✕ Close</button>
+      </div>
+
+      <!-- Quick stats row -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem;margin-bottom:1.4rem">
+        <div style="background:rgba(255,77,106,.07);border:1px solid rgba(255,77,106,.15);border-radius:9px;padding:.7rem .85rem">
+          <div style="font-size:.5rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.15rem">Est. Monthly Bill</div>
+          <div style="font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:var(--red)">${lead.bill ? '$' + lead.bill.toLocaleString() : '—'}</div>
+        </div>
+        <div style="background:rgba(255,77,106,.07);border:1px solid rgba(255,77,106,.15);border-radius:9px;padding:.7rem .85rem">
+          <div style="font-size:.5rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.15rem">Est. Monthly Waste</div>
+          <div style="font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:var(--red)">${estWaste ? '~$' + estWaste.toLocaleString() : '—'}</div>
+        </div>
+        <div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.15);border-radius:9px;padding:.7rem .85rem">
+          <div style="font-size:.5rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.15rem">Year 1 Opportunity</div>
+          <div style="font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:var(--teal)">${estYear ? '~$' + estYear.toLocaleString() : '—'}</div>
+        </div>
+        <div style="background:rgba(160,107,255,.06);border:1px solid rgba(160,107,255,.15);border-radius:9px;padding:.7rem .85rem">
+          <div style="font-size:.5rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.15rem">Current Status</div>
+          <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:900;color:var(--volt)">${STATUS_LABELS[lead.status] || lead.status}</div>
+        </div>
+      </div>
+
+      <!-- AI Brief output -->
+      <div style="background:rgba(0,212,170,.03);border:1px solid rgba(0,212,170,.15);border-radius:13px;padding:1.2rem 1.4rem;margin-bottom:1rem">
+        <div style="font-size:.55rem;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.15em;color:var(--teal);margin-bottom:.7rem">Your Game Plan</div>
+        <div id="brief-out" style="font-size:.78rem;line-height:1.85;color:var(--text);white-space:pre-wrap;min-height:80px">
+          <div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span style="margin-left:.4rem;font-size:.72rem">Generating your brief...</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <button class="btn btn-t" onclick="regenerateBrief(${lead.id})" style="font-size:.65rem">↻ Regenerate</button>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('brief-out').textContent).then(()=>toast('Brief copied!'))" style="font-size:.65rem">Copy Brief</button>
+        <button class="btn btn-v" onclick="openCallBrief_email(${lead.id})" style="font-size:.65rem">→ Generate Email Instead</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  generateCallBriefAI(lead);
+}
+
+async function generateCallBriefAI(lead){
+  const estWaste = lead.bill ? Math.round(lead.bill * 0.22) : null;
+  const estYear  = estWaste ? estWaste * 12 : null;
+
+  const prompt = `You are a sales coach preparing an energy consultant for a cold call or in-person visit to a restaurant. Generate a tight, specific pre-call brief they can read in 60 seconds before walking in.
+
+LEAD INFO:
+Restaurant: ${lead.name}
+Owner: ${lead.owner || 'Unknown'}
+Address: ${lead.address || 'Unknown'}
+Contact: ${lead.contact || 'Unknown'}
+Est. monthly energy bill: ${lead.bill ? '$' + lead.bill.toLocaleString() : 'unknown'}
+Est. monthly waste: ${estWaste ? '~$' + estWaste.toLocaleString() : 'unknown'}
+Est. year 1 opportunity: ${estYear ? '~$' + estYear.toLocaleString() : 'unknown'}
+Current pipeline status: ${STATUS_LABELS[lead.status] || lead.status}
+Notes: ${lead.notes || 'none'}
+
+Write the brief in exactly this format — no extra text:
+
+🎯 OPENING LINE (say this within the first 10 seconds)
+[One sentence. Use their name. Reference their restaurant specifically. Create curiosity without revealing everything.]
+
+💰 YOUR NUMBER (the anchor you drop)
+[The specific dollar waste estimate and how to frame it confidently — e.g. "Based on benchmarks for a restaurant your size, you're likely losing around $X a month..."]
+
+❓ THE 3 QUESTIONS TO ASK
+[Three questions that uncover pain, build rapport, and qualify them — in order. Each one should set up the next.]
+
+⚡ THE CLOSE (how to end this conversation)
+[One or two sentences. A clear, low-friction ask with a specific next step — not "let me know if you're interested."]
+
+⚠️ LIKELY OBJECTION + COUNTER
+[The most probable pushback based on their status/notes, and the exact words to respond with.]
+
+Be specific to this restaurant. No generic sales fluff.
+
+REQUIRED TECHNIQUES TO INCORPORATE:
+- Loss framing: always anchor to what they're LOSING per month, not what they could save
+- SPIN selling: the 3 questions must follow Situation → Problem → Implication order
+- BillDrop Guarantee: if asked, "if I don't find $1,500/year in savings, the report is free"
+- Report price: $199. Monthly monitoring: $129/month ($4.30/day)
+- The close should always be a Rapid Assessment call booking — never a pitch to buy right away`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.map(b => b.text || '').join('') || 'Could not generate brief.';
+    const outEl = document.getElementById('brief-out');
+    if(outEl) outEl.textContent = text;
+  } catch(e) {
+    const outEl = document.getElementById('brief-out');
+    if(outEl) outEl.textContent = 'Error generating brief: ' + e.message;
+  }
+}
+
+async function regenerateBrief(id){
+  const lead = leads.find(l => l.id === id); if(!lead) return;
+  const outEl = document.getElementById('brief-out');
+  if(outEl) outEl.innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span style="margin-left:.4rem">Regenerating...</span></div>';
+  await generateCallBriefAI(lead);
+}
+
+function openCallBrief_email(id){
+  document.getElementById('brief-overlay')?.remove();
+  generateEmailForLead(id);
+}
+
+function generateEmailForLead(id){
+  const lead=leads.find(l=>l.id===id); if(!lead)return;
+  goTo('ai');
+  setTimeout(()=>{
+    const sel=document.getElementById('ai-email-lead');
+    if(sel)sel.value=id;
+  },200);
+}
+
+// ══════════════════════════════════════
+// AI ANALYST — Claude API
+// ══════════════════════════════════════
+async function callClaude(prompt, outputId){
+  const out=document.getElementById(outputId);
+  if(!out)return;
+  out.classList.remove('empty');
+  out.innerHTML='<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span style="margin-left:.3rem">Analyzing...</span></div>';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.map(b=>b.text||'').join('')||'No response received.';
+    out.style.whiteSpace='pre-wrap';
+    out.textContent=text;
+  }catch(e){
+    out.textContent='Error: '+e.message;
+  }
+}
+
+async function aiWriteReport(){
+  const sel=document.getElementById('ai-report-prop');
+  const id=parseInt(sel?.value);
+  if(!id){toast('Select a property first');return;}
+  const prop=properties.find(p=>p.id===id); if(!prop)return;
+  const entries=(await getStore('vpm_energy_'+id))||[];
+  const bm=BENCHMARKS[prop.type]||BENCHMARKS.restaurant;
+  const avgKwh=entries.length?Math.round(entries.reduce((s,e)=>s+e.kwh,0)/entries.length):null;
+  const avgCost=entries.length?Math.round(entries.reduce((s,e)=>s+e.cost,0)/entries.length):null;
+  const intensity=avgKwh&&prop.sqft?(avgKwh*12/prop.sqft).toFixed(1):null;
+  const overPct=intensity?Math.round((intensity-bm.avg)/bm.avg*100):null;
+  const monthlyWaste=overPct>0&&avgCost?Math.round((overPct/100)*avgCost):0;
+  const tone=document.getElementById('ai-report-tone')?.value||'professional';
+  const prompt=`You are an expert energy consultant writing the analysis narrative section of a professional energy intelligence report for a small business client.
+
+CLIENT DATA:
+Business: ${prop.name}
+Type: ${bm.label}
+Address: ${prop.address||'N/A'}
+Square footage: ${prop.sqft?.toLocaleString()||'unknown'} sq ft
+Average monthly bill: ${avgCost?'$'+avgCost.toLocaleString():'unknown'}
+Average monthly kWh: ${avgKwh?.toLocaleString()||'unknown'}
+Energy intensity: ${intensity||'unknown'} kWh/sq ft/yr
+Industry average: ${bm.avg} kWh/sq ft/yr
+Gap vs benchmark: ${overPct?overPct+'% above average':'unknown or at average'}
+Est. monthly waste: ${monthlyWaste?'$'+monthlyWaste.toLocaleString():'unknown'}
+Months of data: ${entries.length}
+Notes: ${prop.notes||'none'}
+
+Write a 3-4 paragraph analysis narrative section for the report. Tone: ${tone}.
+- Paragraph 1: What you found (their usage vs benchmark in plain English)
+- Paragraph 2: Why it matters (specific dollar cost, what that money could otherwise do)
+- Paragraph 3: The biggest opportunity (which system, how to fix it, realistic savings)
+- Paragraph 4: What happens if they do nothing vs act now
+
+Use specific numbers from the data above. No jargon. Write as if explaining to a restaurant owner who cares about money, not technology. Be direct and confident.`;
+  await callClaude(prompt,'ai-report-out');
+}
+
+async function aiWriteEmail(){
+  const sel=document.getElementById('ai-email-lead');
+  const id=parseInt(sel?.value);
+  if(!id){toast('Select a lead from your pipeline first');return;}
+  const lead=leads.find(l=>l.id===id); if(!lead)return;
+  const angle=document.getElementById('ai-email-angle')?.value||'savings';
+  const estWaste=lead.bill?Math.round(lead.bill*0.22):null;
+  const prompt=`You are writing a cold outreach email for an energy consultant who runs BillDrop — he finds money independent restaurants are losing on their energy bills and shows them exactly how to stop. He is targeting independent restaurants.
+
+LEAD INFO:
+Restaurant: ${lead.name}
+Owner: ${lead.owner||'unknown'}
+Address: ${lead.address||'unknown'}
+Est. monthly bill: ${lead.bill?'$'+lead.bill.toLocaleString():'unknown'}
+Est. monthly waste: ${estWaste?'~$'+estWaste.toLocaleString():'unknown'}
+Notes: ${lead.notes||'none'}
+
+ANGLE: ${angle==='savings'?'Lead with the dollar amount they could be saving (gain frame)':angle==='loss'?'Lead with loss framing — how much they are LOSING every month right now. Use loss aversion: people feel losses 2x more strongly than gains. Say: they are bleeding $X/month, not: they could save $X':angle==='benchmark'?'Lead with how they compare to similar restaurants in their area (benchmark data)':'Lead with a story about a similar restaurant that cut its bill significantly'}
+
+Write a short, personalized cold email (subject line + body). Rules:
+- Under 150 words total
+- No corporate speak, no buzzwords
+- Sound like a real person, not a company
+- Be specific about their restaurant by name
+- One clear call to action: book a free 15-minute Rapid Assessment call (NOT 'free analysis' — that's free labor framing)
+- Default to loss framing: 'you're losing $X/month' beats 'you could save $X/month' every time
+- Never use the word 'audit' in the email — use 'Rapid Assessment' or just 'a quick look at your bill'
+- Price for the report is $199 if asked. Monthly monitoring is $129/month.
+- Do NOT mention being 15 — write professionally
+- Subject line should make them want to open it
+
+Format:
+Subject: [subject line]
+
+[email body]`;
+  await callClaude(prompt,'ai-email-out');
+}
+
+async function aiStrategy(){
+  const propSummary=properties.map(p=>`- ${p.name} (${p.type}, $${p.avgBill||0}/mo bill)`).join('\n')||'No properties yet';
+  const leadSummary=leads.map(l=>`- ${l.name}: ${STATUS_LABELS[l.status]}${l.followup?' | followup: '+l.followup:''}`).join('\n')||'No leads yet';
+  const wonCount=leads.filter(l=>l.status==='won').length;
+  const hotCount=leads.filter(l=>['meeting','analysis','proposal'].includes(l.status)).length;
+  const prompt=`You are a business mentor for an energy consultant running an energy consulting business called BillDrop. He targets independent restaurants. Give him specific, actionable advice for this week only.
+
+CURRENT PORTFOLIO:
+${propSummary}
+
+PIPELINE (${leads.length} total leads):
+${leadSummary}
+
+SUMMARY:
+- Won clients: ${wonCount}
+- Hot leads (meeting/analysis/proposal stage): ${hotCount}
+- Prospecting leads: ${leads.filter(l=>l.status==='prospecting').length}
+
+Today's date: ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
+
+Give him:
+1. The single most important thing to do TODAY (be specific, 1-2 sentences)
+2. Top 3 priorities for this week with specific actions
+3. One thing he should STOP wasting time on
+4. One thing he's probably overlooking
+
+KEY BUSINESS RULES to factor into advice:
+- Report price: $199 (Phase 1), $299 after 3+ case studies/testimonials
+- Monthly monitoring: $129/month per client ($4.30/day framing)
+- Weekly non-negotiable: 5 outreach messages MINIMUM (no week off)
+- Never offer free work — offer free 15-min Rapid Assessment call only
+- Lead with loss framing: "you're losing $X/month" beats "you could save $X/month"
+- Referral partners (HVAC, electricians): 12% commission per closed report
+- Phase milestones: Phase 1=first $1K (ACTIVE NOW — do outreach, deliver reports), Phase 2=10 monitoring clients=$1,290 MRR, Phase 3=referrals+scale+rebates
+
+Be direct. No fluff. No vague advice. Every recommendation must be specific and actionable. Under 280 words total.`;
+  await callClaude(prompt,'ai-strategy-out');
+}
+
+async function aiChat(){
+  const inp=document.getElementById('ai-chat-inp');
+  const q=inp?.value.trim();
+  if(!q){toast('Type a question first');return;}
+  const prompt=`You are an expert energy consultant and mentor for an energy consultant running an energy consulting business called BillDrop. He works with independent restaurants.
+
+His question: "${q}"
+
+Answer concisely and practically. Use real numbers and benchmarks where relevant. If he's asking about how to explain something to a client, give him the exact words to use. If he's asking about a technical concept, explain it simply then give him how to monetize the knowledge. Under 200 words unless the question genuinely requires more detail.`;
+  await callClaude(prompt,'ai-chat-out');
+}
+
+// ══════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════
+async function renderDashboard(){
+  // stat cards
+  document.getElementById('d-props').textContent=properties.length;
+  document.getElementById('sb-clients').textContent=properties.length;
+  // calc totals
+  let totalWaste=0, totalSavings=0;
+  const propData=[];
+  for(const p of properties){
+    const entries=(await getStore('vpm_energy_'+p.id))||[];
+    const avgCost=entries.length?entries.reduce((s,e)=>s+e.cost,0)/entries.length:p.avgBill||0;
+    const avgKwh=entries.length?entries.reduce((s,e)=>s+e.kwh,0)/entries.length:0;
+    const bm=BENCHMARKS[p.type]||BENCHMARKS.restaurant;
+    const intensity=avgKwh&&p.sqft?avgKwh*12/p.sqft:0;
+    const overPct=intensity?Math.round((intensity-bm.avg)/bm.avg*100):0;
+    const waste=Math.max(0,Math.round((overPct/100)*avgCost));
+    totalWaste+=waste; totalSavings+=waste*12*0.7;
+    propData.push({prop:p,entries,avgCost,waste,intensity,overPct});
+  }
+  document.getElementById('d-waste').textContent='$'+Math.round(totalWaste).toLocaleString();
+  document.getElementById('d-savings').textContent='$'+Math.round(totalSavings).toLocaleString();
+  const wonCount_=leads.filter(l=>l.status==='won').length;const reportPrice=wonCount_>=3?299:199;pipelineVal=leads.filter(l=>!['lost','won','prospecting','researched'].includes(l.status)).length*reportPrice;
+  document.getElementById('d-pipeline').textContent='$'+pipelineVal.toLocaleString();
+  document.getElementById('sb-savings').textContent='$'+Math.round(totalSavings).toLocaleString();
+  // alerts
+  const alertsEl=document.getElementById('d-alerts');
+  const alerts=[];
+  const today=new Date().toISOString().split('T')[0];
+  leads.filter(l=>l.followup&&l.followup<=today&&l.status!=='won'&&l.status!=='lost').forEach(l=>{
+    alerts.push({color:'var(--red)',icon:'⚠',text:`Follow up overdue: <strong>${l.name}</strong>`});
+  });
+  const hotLeads=leads.filter(l=>['analysis','proposal'].includes(l.status));
+  hotLeads.forEach(l=>alerts.push({color:'var(--amber)',icon:'🔥',text:`<strong>${l.name}</strong> — ${STATUS_LABELS[l.status]}, close this`}));
+  propData.filter(d=>d.overPct>30).forEach(d=>alerts.push({color:'var(--volt)',icon:'💸',text:`<strong>${d.prop.name}</strong> — ${d.overPct}% above avg, high savings pitch`}));
+  if(!alerts.length)alertsEl.innerHTML='<div style="font-size:.72rem;color:var(--muted);font-style:italic">All clear. Add data to see alerts.</div>';
+  else alertsEl.innerHTML=alerts.slice(0,5).map(a=>`<div style="font-size:.72rem;padding:.38rem .5rem;border-left:2px solid ${a.color};margin-bottom:.35rem;padding-left:.65rem;line-height:1.55">${a.icon} ${a.text}</div>`).join('');
+  // opportunities
+  const oppsEl=document.getElementById('d-opps');
+  const opps=propData.filter(d=>d.waste>0).sort((a,b)=>b.waste-a.waste);
+  if(!opps.length)oppsEl.innerHTML='<div style="font-size:.72rem;color:var(--muted);font-style:italic">Log energy data for properties to see opportunities.</div>';
+  else oppsEl.innerHTML=opps.slice(0,4).map(d=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:.38rem 0;border-bottom:1px solid var(--border);font-size:.72rem">
+    <div><strong style="color:#fff">${d.prop.name}</strong><br><span style="color:var(--muted);font-size:.62rem">${d.overPct}% above avg</span></div>
+    <div style="text-align:right"><div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:900;color:var(--red)">$${d.waste.toLocaleString()}</div><div style="font-size:.52rem;color:var(--muted)">/month</div></div>
+  </div>`).join('');
+  // portfolio list
+  const plEl=document.getElementById('d-portfolio-list');
+  if(!properties.length){plEl.innerHTML='<div style="font-size:.72rem;color:var(--muted);font-style:italic;padding:.5rem 0">No properties yet.</div>';return;}
+  plEl.innerHTML=`<table class="tbl"><thead><tr><th>Property</th><th>Type</th><th>Avg Bill</th><th>Est. Waste</th><th>Yr 1 Potential</th><th>Status</th></tr></thead><tbody>${
+    propData.map(function(d){
+      const _ow=d.prop.owner?'<br><span style="font-size:.62rem;color:var(--muted)">'+d.prop.owner+'</span>':'';
+      const _bl=BENCHMARKS[d.prop.type]?BENCHMARKS[d.prop.type].label.split(' ')[0]:d.prop.type;
+      const _wc=d.waste>0?'$'+d.waste.toLocaleString()+'/mo':'No data';
+      const _sc=d.waste>0?'$'+(d.waste*12*0.7).toFixed(0)+'-$'+(d.waste*12).toFixed(0):'-';
+      const _mc=d.entries.length>0?'bdg-t':'bdg-m';
+      const _ml=d.entries.length>0?d.entries.length+' months':'No data';
+      return '<tr><td><strong style="color:#fff">'+d.prop.name+'</strong>'+_ow+'</td>'
+        +'<td><span class="bdg bdg-m">'+_bl+'</span></td>'
+        +'<td>$'+Math.round(d.avgCost).toLocaleString()+'/mo</td>'
+        +'<td style="color:var(--red);font-weight:600">'+_wc+'</td>'
+        +'<td style="color:var(--green)">'+_sc+'</td>'
+        +'<td><span class="bdg '+_mc+'">'+_ml+'</span></td></tr>';
+    }).join('')
+  }</tbody></table>`;
+}
+
+// ══════════════════════════════════════
+// PITCH MODE — THE SURPRISE
+// EnergyStar will NEVER have this.
+// A full-screen live presentation you
+// flip your laptop to face the owner.
+// ══════════════════════════════════════
+
+function openPitchMode(propId){
+  const prop=properties.find(p=>p.id===propId);
+  if(!prop){toast('Property not found');return;}
+  const bm=BENCHMARKS[prop.type]||BENCHMARKS.restaurant;
+  const monthlyWaste=prop.avgBill?Math.round(prop.avgBill*0.22):0;
+  const yr1=Math.round(monthlyWaste*12*0.7);
+  const yr1high=monthlyWaste*12;
+
+  // Personalize — ask for owner name if not stored
+  const ownerName = prop.owner ? prop.owner.split(' ')[0] : prop.name.split(' ')[0];
+
+  const overlay=document.createElement('div');
+  overlay.id='pitch-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:#03030a;z-index:9999;display:flex;flex-direction:column;overflow:hidden;font-family:"DM Sans",sans-serif';
+
+  const perSecond = monthlyWaste / (30 * 24 * 3600);
+  const perMinute = monthlyWaste / (30 * 24 * 60);
+  const billLabel = prop.avgBill ? '$'+prop.avgBill.toLocaleString()+'/mo' : '';
+  const breakdownRows=Object.entries(bm.breakdown).slice(0,5).map(function(e){
+    var cat=e[0],pct=e[1],em=prop.avgBill?Math.round(prop.avgBill*(pct/100)):0,we=Math.round(em*0.18);
+    return '<div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1.1rem">'
+      +'<div style="flex-shrink:0;width:140px;font-size:.88rem;color:#dce3f5;text-align:right">'+cat+'</div>'
+      +'<div style="flex:1;height:22px;background:rgba(255,255,255,.06);border-radius:4px;position:relative;overflow:hidden">'
+      +'<div style="position:absolute;left:0;top:0;bottom:0;width:'+pct+'%;background:linear-gradient(90deg,rgba(160,107,255,.5),rgba(0,212,170,.3));border-radius:4px"></div>'
+      +'</div>'
+      +'<div style="flex-shrink:0;width:120px;font-size:.78rem;color:#ff3d6b">~$'+we+'/mo</div>'
+      +'</div>';
+  }).join('');
+
+  const slides=[
+    // Slide 0: Cover
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:4rem">
+      <div style="font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.25em;text-transform:uppercase;color:#393d6a;margin-bottom:1.5rem">CONFIDENTIAL · PREPARED FOR</div>
+      <div style="font-family:'Fraunces',serif;font-size:clamp(3rem,8vw,5.5rem);font-weight:900;color:#fff;line-height:.95;margin-bottom:1.2rem">${prop.name}</div>
+      <div style="font-family:'Fraunces',serif;font-size:clamp(1.2rem,3vw,1.8rem);font-weight:900;color:#00d4aa;margin-bottom:.6rem;font-style:italic">Energy Intelligence Report</div>
+      <div style="font-size:1rem;color:#393d6a;font-family:'Space Mono',monospace">${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>
+      <div style="margin-top:4rem;width:60px;height:2px;background:linear-gradient(90deg,#00d4aa,#00d4aa)"></div>
+      <div style="font-size:.65rem;font-family:'Space Mono',monospace;color:#393d6a;margin-top:1rem">Prepared by BillDrop · Confidential</div>
+    </div>`,
+
+    // Slide 1: Live money drain counter — THE HOOK
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:4rem;position:relative">
+      <div style="font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:#393d6a;margin-bottom:1.5rem">WHILE WE'VE BEEN TALKING</div>
+      <div style="font-family:'Fraunces',serif;font-size:clamp(4.5rem,16vw,10rem);font-weight:900;color:#ff3d6b;line-height:.85;margin-bottom:.5rem;text-shadow:0 0 60px rgba(255,77,106,.25)" id="pm-drain">$0.00</div>
+      <div style="font-family:'Fraunces',serif;font-size:clamp(1rem,3vw,1.6rem);font-weight:900;color:#fff;margin-bottom:1.2rem">has left your business.</div>
+      <div style="font-size:clamp(.75rem,2vw,.95rem);color:#393d6a;max-width:500px;line-height:1.9">That number keeps going whether we fix it or not.<br>Every hour: <strong style="color:#ff3d6b">$${Math.round(perMinute*60).toLocaleString()}</strong> &nbsp;·&nbsp; Every day: <strong style="color:#ff3d6b">$${Math.round(perMinute*60*24).toLocaleString()}</strong> &nbsp;·&nbsp; Every year: <strong style="color:#ff3d6b">$${Math.round(monthlyWaste*12).toLocaleString()}</strong></div>
+      <div style="margin-top:2rem;font-size:.7rem;font-family:'Space Mono',monospace;color:#2a1a3a">Based on benchmark analysis for ${bm.label.toLowerCase()} businesses at your size.</div>
+    </div>`,
+
+    // Slide 2: The Number
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:4rem">
+      <div style="font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:#393d6a;margin-bottom:2rem">HERE IS WHAT WE FOUND</div>
+      <div style="font-family:'Fraunces',serif;font-size:clamp(4rem,14vw,9rem);font-weight:900;color:#ff3d6b;line-height:.85;margin-bottom:.5rem" id="pm-counter">$0</div>
+      <div style="font-family:'Fraunces',serif;font-size:clamp(1rem,3vw,1.6rem);font-weight:900;color:#fff;margin-bottom:1rem">leaking from your energy bill<br>every single month.</div>
+      <div style="font-size:clamp(.75rem,2vw,1rem);color:#393d6a;max-width:520px;line-height:1.8">That is <strong style="color:#ff3d6b">$${yr1high.toLocaleString()}</strong> per year leaving your business for reasons that are completely fixable — most of them at zero cost.</div>
+    </div>`,
+
+    // Slide 3: Benchmark
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:3rem 4rem">
+      <div style="font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#393d6a;margin-bottom:2rem;text-align:center">HOW YOU COMPARE TO SIMILAR RESTAURANTS</div>
+      <div style="width:100%;max-width:620px">
+        <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:1.8rem">
+          <div style="flex-shrink:0;width:160px;text-align:right;font-size:.85rem;color:#dce3f5">${prop.name}</div>
+          <div style="flex:1"><div style="height:28px;background:linear-gradient(90deg,#ff3d6b,#00d4aa);border-radius:4px;width:82%;display:flex;align-items:center;padding:0 .75rem"><span style="font-family:'Fraunces',serif;font-size:1rem;font-weight:900;color:#fff">${billLabel}</span></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:1.8rem">
+          <div style="flex-shrink:0;width:160px;text-align:right;font-size:.85rem;color:#393d6a">Industry Average</div>
+          <div style="flex:1"><div style="height:28px;background:rgba(255,255,255,.12);border-radius:4px;width:60%;display:flex;align-items:center;padding:0 .75rem"><span style="font-size:.9rem;color:#6b7280">${bm.avg} kWh/sqft/yr</span></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1.5rem">
+          <div style="flex-shrink:0;width:160px;text-align:right;font-size:.85rem;color:#393d6a">Best in Class</div>
+          <div style="flex:1"><div style="height:28px;background:rgba(57,255,158,.15);border-radius:4px;width:30%;display:flex;align-items:center;padding:0 .75rem"><span style="font-size:.9rem;color:#3dffa0">${bm.best} kWh/sqft/yr</span></div></div>
+        </div>
+      </div>
+      <div style="margin-top:2.5rem;font-size:clamp(.9rem,2.5vw,1.15rem);color:#dce3f5;text-align:center;max-width:520px;line-height:1.85">The gap between where you are and where similar restaurants operate is <strong style="color:#ff3d6b">costing you money you don't have to spend.</strong></div>
+    </div>`,
+
+    // Slide 4: Where the money goes
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:3rem 4rem">
+      <div style="font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#393d6a;margin-bottom:2rem;text-align:center">WHERE THE MONEY IS GOING</div>
+      <div style="width:100%;max-width:600px">${breakdownRows}</div>
+      <div style="margin-top:1.8rem;font-size:.95rem;color:#dce3f5;text-align:center;max-width:520px;line-height:1.85">Estimates based on industry data. Exact figures in your full report.</div>
+    </div>`,
+
+    // Slide 5: The Fix tiers
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:4rem">
+      <div style="font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#393d6a;margin-bottom:2rem">HERE IS WHAT FIXING IT LOOKS LIKE</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:700px;width:100%;margin-bottom:2.5rem">
+        <div style="background:rgba(57,255,158,.05);border:1px solid rgba(57,255,158,.2);border-radius:13px;padding:1.5rem 1rem">
+          <div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:#3dffa0;margin-bottom:.4rem">Tier 1</div>
+          <div style="font-size:.8rem;font-weight:600;color:#fff;margin-bottom:.5rem">Zero Cost</div>
+          <div style="font-size:.7rem;color:#393d6a;line-height:1.7">Schedule adjustments, thermostat setpoints, overnight shutdown checklists</div>
+          <div style="font-family:'Fraunces',serif;font-size:1.5rem;font-weight:900;color:#3dffa0;margin-top:.8rem">$${Math.round(monthlyWaste*.25).toLocaleString()}/mo</div>
+        </div>
+        <div style="background:rgba(255,179,71,.05);border:1px solid rgba(255,179,71,.2);border-radius:13px;padding:1.5rem 1rem">
+          <div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:#ffaa35;margin-bottom:.4rem">Tier 2</div>
+          <div style="font-size:.8rem;font-weight:600;color:#fff;margin-bottom:.5rem">Under $500</div>
+          <div style="font-size:.7rem;color:#393d6a;line-height:1.7">LED upgrades, smart strips, low-flow equipment, simple controls</div>
+          <div style="font-family:'Fraunces',serif;font-size:1.5rem;font-weight:900;color:#ffaa35;margin-top:.8rem">$${Math.round(monthlyWaste*.45).toLocaleString()}/mo</div>
+        </div>
+        <div style="background:rgba(80,150,255,.05);border:1px solid rgba(80,150,255,.2);border-radius:13px;padding:1.5rem 1rem">
+          <div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:#3a8fff;margin-bottom:.4rem">Tier 3</div>
+          <div style="font-size:.8rem;font-weight:600;color:#fff;margin-bottom:.5rem">Equipment upgrades</div>
+          <div style="font-size:.7rem;color:#393d6a;line-height:1.7">HVAC replacement, refrigeration upgrades, solar</div>
+          <div style="font-family:'Fraunces',serif;font-size:1.5rem;font-weight:900;color:#3a8fff;margin-top:.8rem">$${Math.round(monthlyWaste*.65).toLocaleString()}/mo</div>
+        </div>
+      </div>
+      <div style="font-size:1rem;color:#dce3f5;max-width:560px;line-height:1.85">Year 1 total savings potential: <strong style="color:#3dffa0;font-size:1.3rem">$${yr1.toLocaleString()}–$${yr1high.toLocaleString()}</strong>. Most Tier 1 changes start <strong style="color:#fff">this week.</strong></div>
+    </div>`,
+
+    // Slide 6: What you get — NEW
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:3rem 4rem">
+      <div style="font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#393d6a;margin-bottom:1.5rem;text-align:center">WHAT YOU GET WITH BILLDROP</div>
+      <div style="font-family:'Fraunces',serif;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:900;color:#fff;text-align:center;margin-bottom:2rem;line-height:1">Not a report. A system.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:720px;width:100%">
+        <div style="background:rgba(160,107,255,.06);border:1px solid rgba(160,107,255,.15);border-radius:13px;padding:1.2rem 1.3rem;display:flex;gap:.9rem;align-items:flex-start">
+          <div style="font-size:1.4rem;flex-shrink:0">📊</div>
+          <div><div style="font-size:.88rem;font-weight:700;color:#fff;margin-bottom:.3rem">AI Energy Intelligence Report</div><div style="font-size:.7rem;color:#393d6a;line-height:1.65">Every leak identified. Every dollar quantified. A ranked action plan — delivered within 5 days.</div></div>
+        </div>
+        <div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.12);border-radius:13px;padding:1.2rem 1.3rem;display:flex;gap:.9rem;align-items:flex-start">
+          <div style="font-size:1.4rem;flex-shrink:0">📈</div>
+          <div><div style="font-size:.88rem;font-weight:700;color:#fff;margin-bottom:.3rem">Monthly Progress Report</div><div style="font-size:.7rem;color:#393d6a;line-height:1.65">One page every month. Shows exactly how much you saved vs baseline — with real numbers, not estimates.</div></div>
+        </div>
+        <div style="background:rgba(57,255,158,.04);border:1px solid rgba(57,255,158,.1);border-radius:13px;padding:1.2rem 1.3rem;display:flex;gap:.9rem;align-items:flex-start">
+          <div style="font-size:1.4rem;flex-shrink:0">🎯</div>
+          <div><div style="font-size:.88rem;font-weight:700;color:#fff;margin-bottom:.3rem">Benchmark Score Card</div><div style="font-size:.7rem;color:#393d6a;line-height:1.65">Your energy score vs every restaurant in your category. You see exactly where you rank and how far you are from best in class.</div></div>
+        </div>
+        <div style="background:rgba(255,179,71,.04);border:1px solid rgba(255,179,71,.1);border-radius:13px;padding:1.2rem 1.3rem;display:flex;gap:.9rem;align-items:flex-start">
+          <div style="font-size:1.4rem;flex-shrink:0">💸</div>
+          <div><div style="font-size:.88rem;font-weight:700;color:#fff;margin-bottom:.3rem">Savings Forecast</div><div style="font-size:.7rem;color:#393d6a;line-height:1.65">A 12-month projection showing exact dollar savings at each tier. Not vague promises — specific numbers tied to your data.</div></div>
+        </div>
+        <div style="background:rgba(80,150,255,.04);border:1px solid rgba(80,150,255,.1);border-radius:13px;padding:1.2rem 1.3rem;display:flex;gap:.9rem;align-items:flex-start">
+          <div style="font-size:1.4rem;flex-shrink:0">⚡</div>
+          <div><div style="font-size:.88rem;font-weight:700;color:#fff;margin-bottom:.3rem">Rebate Identification</div><div style="font-size:.7rem;color:#393d6a;line-height:1.65">We find every utility rebate and incentive you qualify for. Most restaurants leave $500–$3,000 on the table every year.</div></div>
+        </div>
+        <div style="background:rgba(160,107,255,.06);border:1px solid rgba(160,107,255,.15);border-radius:13px;padding:1.2rem 1.3rem;display:flex;gap:.9rem;align-items:flex-start">
+          <div style="font-size:1.4rem;flex-shrink:0">🔧</div>
+          <div><div style="font-size:.88rem;font-weight:700;color:#fff;margin-bottom:.3rem">Vetted Contractor Network</div><div style="font-size:.7rem;color:#393d6a;line-height:1.65">When you're ready for upgrades, we connect you with pre-vetted HVAC and electrical contractors — no markup, no kickbacks.</div></div>
+        </div>
+      </div>
+    </div>`,
+
+    // Slide 6b: ROI Calculator — interactive
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:3rem 4rem">
+      <div style="font-family:\'Space Mono\',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#393d6a;margin-bottom:1.5rem;text-align:center">YOUR PERSONAL PAYBACK CALCULATOR</div>
+      <div style="font-family:\'Fraunces\',serif;font-size:clamp(1.4rem,3.5vw,2.2rem);font-weight:900;color:#fff;text-align:center;margin-bottom:2rem">How fast does this pay for itself?</div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(160,107,255,.2);border-radius:16px;padding:2rem 2.5rem;max-width:500px;width:100%">
+        <div style="font-size:.78rem;color:#dce3f5;margin-bottom:.75rem;font-family:\'Space Mono\',monospace;letter-spacing:.1em;text-transform:uppercase">Report investment ($)</div>
+        <input id="pm-roi-input" type="number" value="149" min="1"
+          style="width:100%;background:rgba(160,107,255,.1);border:1px solid rgba(160,107,255,.3);border-radius:9px;padding:.9rem 1.1rem;font-family:\'Fraunces\',serif;font-size:2rem;font-weight:900;color:#fff;outline:none;margin-bottom:1.5rem;box-sizing:border-box"
+          oninput="updateROI(${monthlyWaste})">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;text-align:center">
+          <div style="background:rgba(57,255,158,.05);border:1px solid rgba(57,255,158,.15);border-radius:11px;padding:1rem .5rem">
+            <div style="font-family:\'Fraunces\',serif;font-size:1.6rem;font-weight:900;color:#3dffa0" id="pm-roi-days">—</div>
+            <div style="font-size:.62rem;color:#393d6a;margin-top:.3rem;font-family:\'Space Mono\',monospace;text-transform:uppercase;letter-spacing:.08em">Days to<br>pay back</div>
+          </div>
+          <div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.15);border-radius:11px;padding:1rem .5rem">
+            <div style="font-family:\'Fraunces\',serif;font-size:1.6rem;font-weight:900;color:#00d4aa" id="pm-roi-month1">—</div>
+            <div style="font-size:.62rem;color:#393d6a;margin-top:.3rem;font-family:\'Space Mono\',monospace;text-transform:uppercase;letter-spacing:.08em">Net savings<br>Month 1</div>
+          </div>
+          <div style="background:rgba(255,179,71,.05);border:1px solid rgba(255,179,71,.15);border-radius:11px;padding:1rem .5rem">
+            <div style="font-family:\'Fraunces\',serif;font-size:1.6rem;font-weight:900;color:#ffaa35" id="pm-roi-yr1">—</div>
+            <div style="font-size:.62rem;color:#393d6a;margin-top:.3rem;font-family:\'Space Mono\',monospace;text-transform:uppercase;letter-spacing:.08em">Year 1<br>net profit</div>
+          </div>
+        </div>
+        <div style="margin-top:1.5rem;font-size:.72rem;color:#393d6a;text-align:center;line-height:1.7">Based on conservative Tier 1+2 savings estimate of <strong style="color:#dce3f5">$${Math.round(monthlyWaste*.45).toLocaleString()}/month</strong></div>
+      </div>
+    </div>`,
+
+    // Slide 6c: Objection Killer
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:3rem 4rem">
+      <div style="font-family:\'Space Mono\',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#393d6a;margin-bottom:1.5rem;text-align:center">LET ME GUESS WHAT YOU\'RE THINKING</div>
+      <div style="font-family:\'Fraunces\',serif;font-size:clamp(1.4rem,3.5vw,2.2rem);font-weight:900;color:#fff;text-align:center;margin-bottom:2rem">Every owner says one of these three things.</div>
+      <div style="display:flex;flex-direction:column;gap:1rem;max-width:660px;width:100%">
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(160,107,255,.15);border-radius:13px;padding:1.3rem 1.5rem">
+          <div style="font-size:.8rem;font-weight:700;color:#00d4aa;margin-bottom:.4rem">"I don't have time for this."</div>
+          <div style="font-size:.75rem;color:#dce3f5;line-height:1.75">You don't need any. You hand me your last 12 utility bills — takes 10 minutes. I do everything else. You get a report within 5 business days. Zero disruption to your operation.</div>
+        </div>
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(0,212,170,.12);border-radius:13px;padding:1.3rem 1.5rem">
+          <div style="font-size:.8rem;font-weight:700;color:#00d4aa;margin-bottom:.4rem">"I already have someone handling my utilities."</div>
+          <div style="font-size:.75rem;color:#dce3f5;line-height:1.75">Your utility rep works for the utility company. I work for you. My job is to find every dollar they\'re not telling you about — rebates, inefficiencies, billing errors. Different role entirely.</div>
+        </div>
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(57,255,158,.1);border-radius:13px;padding:1.3rem 1.5rem">
+          <div style="font-size:.8rem;font-weight:700;color:#3dffa0;margin-bottom:.4rem">"How do I know the savings are real?"</div>
+          <div style="font-size:.75rem;color:#dce3f5;line-height:1.75">Every number in your report is traceable back to your actual bills and DOE benchmark data. Month 2, you\'ll have a progress report showing real savings vs your baseline. If the savings aren\'t there, the report is on me.</div>
+        </div>
+      </div>
+    </div>`,
+
+    // Slide 7: Close
+
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:4rem">
+      <div style="font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:#393d6a;margin-bottom:1.5rem">NEXT STEPS</div>
+      <div style="font-family:'Fraunces',serif;font-size:clamp(2rem,6vw,3.8rem);font-weight:900;color:#fff;line-height:.95;margin-bottom:1.5rem">You have two options.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:680px;width:100%;margin-bottom:2.5rem">
+        <div style="background:rgba(255,77,106,.04);border:1px solid rgba(255,77,106,.15);border-radius:13px;padding:1.8rem">
+          <div style="font-size:2rem;margin-bottom:.75rem">😐</div>
+          <div style="font-size:.95rem;font-weight:600;color:#fff;margin-bottom:.6rem">Do nothing</div>
+          <div style="font-size:.78rem;color:#393d6a;line-height:1.75">Keep paying <strong style="color:#ff3d6b">$${monthlyWaste.toLocaleString()}/month</strong> more than necessary. That's <strong style="color:#ff3d6b">$${yr1high.toLocaleString()}</strong> next year staying on the table.</div>
+        </div>
+        <div style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.25);border-radius:13px;padding:1.8rem">
+          <div style="font-size:2rem;margin-bottom:.75rem">✅</div>
+          <div style="font-size:.95rem;font-weight:600;color:#fff;margin-bottom:.6rem">Get the full report</div>
+          <div style="font-size:.78rem;color:#dce3f5;line-height:1.75">Full AI Energy Intelligence Report — every leak, every dollar, ranked action plan. Starting at <strong style="color:#00d4aa">$199</strong>. Monthly monitoring from <strong style="color:#00d4aa">$129/mo</strong>.</div>
+        </div>
+      </div>
+      <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-style:italic;color:#00d4aa">Any questions before we move forward?</div>
+    </div>`
+  ];
+  let currentSlide=0;
+
+  let drainInterval=null;
+  function renderSlide(){
+    if(drainInterval){clearInterval(drainInterval);drainInterval=null;}
+    content.innerHTML=slides[currentSlide];
+    progress.textContent=(currentSlide+1)+' / '+slides.length;
+    prevBtn.style.opacity=currentSlide===0?'0.3':'1';
+    nextBtn.textContent=currentSlide===slides.length-1?'Done →':'Next →';
+    // Slide 1: live drain counter
+    if(currentSlide===1){
+      const startTime=Date.now();
+      drainInterval=setInterval(function(){
+        const el=document.getElementById('pm-drain');
+        if(!el){clearInterval(drainInterval);return;}
+        const secs=(Date.now()-startTime)/1000;
+        const drained=perSecond*secs;
+        el.textContent='$'+drained.toFixed(2);
+      },50);
+    }
+    // ROI calc slide — auto-trigger on render
+    setTimeout(function(){
+      const ri=document.getElementById('pm-roi-input');
+      if(ri) updateROI(monthlyWaste);
+    },50);
+    // Slide 2: animated counter
+    if(currentSlide===2){
+      let start=0; const target=monthlyWaste;
+      const dur=1200; const startTime=Date.now();
+      function tick(){
+        const elapsed=Date.now()-startTime;
+        const p2=Math.min(1,elapsed/dur);
+        const ease=1-Math.pow(1-p2,4);
+        const val=Math.round(start+(target-start)*ease);
+        const el=document.getElementById('pm-counter');
+        if(el)el.textContent='$'+val.toLocaleString();
+        if(p2<1)requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+  }
+
+  overlay.innerHTML=`
+    <div style="padding:1.2rem 2rem;border-bottom:1px solid rgba(26,18,40,.8);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="font-family:'Fraunces',serif;font-size:.95rem;font-weight:900;color:#00d4aa">BILLDROP PITCH MODE</div>
+      <div style="display:flex;align-items:center;gap:1rem">
+        <span id="pm-progress" style="font-family:'Space Mono',monospace;font-size:.65rem;color:#393d6a"></span>
+        <button id="pm-prev" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:.4rem .9rem;color:#dce3f5;cursor:pointer;font-size:.7rem">← Back</button>
+        <button id="pm-next" style="background:rgba(160,107,255,.15);border:1px solid rgba(160,107,255,.3);border-radius:7px;padding:.4rem .9rem;color:#00d4aa;cursor:pointer;font-size:.7rem;font-weight:600">Next →</button>
+        <button onclick="document.getElementById('pitch-overlay').remove()" style="background:rgba(255,77,106,.1);border:1px solid rgba(255,77,106,.2);border-radius:7px;padding:.4rem .9rem;color:#ff3d6b;cursor:pointer;font-size:.7rem">✕ Exit</button>
+      </div>
+    </div>
+    <div id="pm-content" style="flex:1;overflow:hidden"></div>`;
+  document.body.appendChild(overlay);
+
+  const content=document.getElementById('pm-content');
+  const progress=document.getElementById('pm-progress');
+  const prevBtn=document.getElementById('pm-prev');
+  const nextBtn=document.getElementById('pm-next');
+
+  prevBtn.onclick=()=>{if(currentSlide>0){currentSlide--;renderSlide();}};
+  nextBtn.onclick=()=>{
+    if(currentSlide<slides.length-1){currentSlide++;renderSlide();}
+    else{overlay.remove();}
+  };
+  document.addEventListener('keydown',function pmKeys(e){
+    if(!document.getElementById('pitch-overlay')){document.removeEventListener('keydown',pmKeys);return;}
+    if(e.key==='ArrowRight'&&currentSlide<slides.length-1){currentSlide++;renderSlide();}
+    if(e.key==='ArrowLeft'&&currentSlide>0){currentSlide--;renderSlide();}
+    if(e.key==='Escape'){overlay.remove();document.removeEventListener('keydown',pmKeys);}
+  });
+  renderSlide();
+}
+
+// ══════════════════════════════════════
+// POPULATE SELECTS + INIT
+// ══════════════════════════════════════
+function populatePropSelects(){
+  const ids=['bm-prop-sel','el-prop-sel','lk-prop-sel','rb-prop-sel','ai-report-prop'];
+  ids.forEach(id=>{
+    const sel=document.getElementById(id); if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Select a property —</option>';
+    properties.forEach(p=>sel.innerHTML+=`<option value="${p.id}">${p.name}</option>`);
+    if(cur)sel.value=cur;
+  });
+}
+
+function populateLeadSelects(){
+  const sel=document.getElementById('ai-email-lead'); if(!sel)return;
+  sel.innerHTML='<option value="">— Select a lead —</option>';
+  leads.forEach(l=>sel.innerHTML+=`<option value="${l.id}">${l.name}${l.owner?' ('+l.owner+')':''}</option>`);
+}
+
+function updateSidebar(){
+  const c=document.getElementById('sb-clients');
+  if(c)c.textContent=properties.length;
+}
+
+// Add pitch mode button to property cards (after load)
+function addPitchButtons(){
+  properties.forEach(p=>{
+    const card=document.getElementById('pc-'+p.id); if(!card)return;
+    const actions=card.querySelector('.pc-actions'); if(!actions)return;
+    if(actions.querySelector('.pitch-btn'))return;
+    const btn=document.createElement('button');
+    btn.className='btn btn-g pitch-btn';
+    btn.style.cssText='font-size:.6rem;padding:.32rem .7rem';
+    btn.textContent='🎯 Pitch Mode';
+    btn.onclick=(e)=>{e.stopPropagation();openPitchMode(p.id);};
+    actions.prepend(btn);
+  });
+}
+
+async function init(){
+  await loadProperties();
+  await loadLeads();
+  renderDashboard();
+  populatePropSelects();
+  populateLeadSelects();
+}
+
+init();
+</script>
+
+<script>
+// ── REFERRAL PARTNERS ──
+const RP_KEY = 'billdrop_referral_partners_v1';
+let rpData = [];
+
+async function rpLoad() {
+  try { const d = await getStore(RP_KEY); if(d) rpData = d; } catch(e) {}
+  rpRender();
+}
+
+async function rpAdd() {
+  const name = document.getElementById('rp-name')?.value.trim();
+  const type = document.getElementById('rp-type')?.value;
+  const contact = document.getElementById('rp-contact')?.value.trim();
+  const phone = document.getElementById('rp-phone')?.value.trim();
+  const status = document.getElementById('rp-status')?.value;
+  const referrals = parseInt(document.getElementById('rp-referrals-in')?.value)||0;
+  if(!name) { alert('Add company name first.'); return; }
+  rpData.unshift({ id: Date.now(), name, type, contact, phone, status, referrals, commissions: referrals * 299 * 0.12, date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) });
+  try { await setStore(RP_KEY, rpData); } catch(e) {}
+  ['rp-name','rp-contact','rp-phone'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  rpRender();
+}
+
+function rpRender() {
+  const el = id => document.getElementById(id);
+  const active = rpData.filter(p=>p.status==='agreed').length;
+  const totalRefs = rpData.reduce((s,p)=>s+p.referrals,0);
+  const totalComm = rpData.reduce((s,p)=>s+(p.referrals*299*0.12),0);
+  if(el('rp-count')) el('rp-count').textContent = active;
+  if(el('rp-referrals')) el('rp-referrals').textContent = totalRefs;
+  if(el('rp-commissions')) el('rp-commissions').textContent = '$'+Math.round(totalComm).toLocaleString();
+  const list = el('rp-list');
+  if(!list) return;
+  if(!rpData.length) { list.innerHTML = '<div style="color:#555;text-align:center;padding:2rem;font-size:.85rem;">No referral partners yet. One HVAC company can replace 60 cold emails. Start here.</div>'; return; }
+  const statusColors = { prospect:'#555', contacted:'#ffaa35', agreed:'#3dffa0', inactive:'#ff3d6b' };
+  const typeLabels = { hvac:'🔧 HVAC', electrical:'⚡ Electrician', equipment:'🏭 Equipment', plumbing:'🔩 Plumbing', other:'🔗 Other' };
+  list.innerHTML = rpData.map(p => `
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:1rem 1.2rem;margin-bottom:.7rem;display:flex;justify-content:space-between;align-items:center;border-left:3px solid ${statusColors[p.status]||'#555'};">
+      <div>
+        <div style="font-weight:700;color:#fff;font-size:.9rem;">${p.name}</div>
+        <div style="font-size:.75rem;color:#555;margin-top:.2rem;">${typeLabels[p.type]||p.type} · ${p.contact||''} ${p.phone?'· '+p.phone:''}</div>
+        <div style="font-size:.72rem;color:${statusColors[p.status]};margin-top:.3rem;text-transform:uppercase;letter-spacing:.06em;">${p.status}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:1.2rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;">${p.referrals} refs</div>
+        <div style="font-size:.72rem;color:#555;">$${Math.round(p.referrals*299*0.12)} commissions paid</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── CASE STUDIES ──
+const CS_KEY = 'billdrop_case_studies_v1';
+let csData = [];
+
+async function csLoad() {
+  try { const d = await getStore(CS_KEY); if(d) csData = d; } catch(e) {}
+  csRender();
+}
+
+async function csAdd() {
+  const name = document.getElementById('cs-name')?.value.trim();
+  const type = document.getElementById('cs-type')?.value.trim();
+  const sqft = document.getElementById('cs-sqft')?.value.trim();
+  const billBefore = parseFloat(document.getElementById('cs-bill-before')?.value)||0;
+  const wasteFound = parseFloat(document.getElementById('cs-waste-found')?.value)||0;
+  const topLeak = document.getElementById('cs-top-leak')?.value.trim();
+  const testimonial = document.getElementById('cs-testimonial')?.value.trim();
+  const permission = document.getElementById('cs-permission')?.value;
+  const monitoring = document.getElementById('cs-monitoring')?.value;
+  if(!name||!wasteFound) { alert('Need restaurant name and waste found amount.'); return; }
+  csData.unshift({ id: Date.now(), name, type, sqft, billBefore, wasteFound, topLeak, testimonial, permission, monitoring, date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) });
+  try { await setStore(CS_KEY, csData); } catch(e) {}
+  ['cs-name','cs-type','cs-sqft','cs-bill-before','cs-waste-found','cs-top-leak','cs-testimonial'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  csRender();
+}
+
+function csRender() {
+  const el = id => document.getElementById(id);
+  const total = csData.reduce((s,c)=>s+c.wasteFound,0);
+  const avg = csData.length ? Math.round(total/csData.length) : 0;
+  const testimonials = csData.filter(c=>c.testimonial&&c.permission!=='no').length;
+  if(el('cs-count')) el('cs-count').textContent = csData.length;
+  if(el('cs-total')) el('cs-total').textContent = '$'+total.toLocaleString();
+  if(el('cs-avg')) el('cs-avg').textContent = '$'+avg.toLocaleString();
+  if(el('cs-testimonials')) el('cs-testimonials').textContent = testimonials;
+  const list = el('cs-list');
+  if(!list) return;
+  if(!csData.length) { list.innerHTML = '<div style="color:#555;text-align:center;padding:2rem;font-size:.85rem;">No case studies yet. First client result goes here. This becomes your pitch weapon.</div>'; return; }
+  list.innerHTML = csData.map(c => `
+    <div style="background:var(--card);border:1px solid var(--bd);border-radius:13px;padding:1.2rem;margin-bottom:.8rem;border-left:3px solid var(--volt);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem;">
+        <div>
+          <div style="font-weight:700;color:#fff;font-size:.95rem;">${c.permission==='yes'?c.name:'[Anonymous ' + (c.type||'Restaurant') + ']'}</div>
+          <div style="font-size:.75rem;color:#555;">${c.type||''} ${c.sqft?'· '+c.sqft+' sqft':''} · ${c.date}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--volt);font-family:'Space Mono',monospace;">$${c.wasteFound.toLocaleString()}/mo</div>
+          <div style="font-size:.7rem;color:#555;">waste found · $${(c.wasteFound*12).toLocaleString()}/yr</div>
+        </div>
+      </div>
+      ${c.topLeak?`<div style="font-size:.8rem;color:#ffaa35;margin-bottom:.4rem;">🔥 Top leak: ${c.topLeak}</div>`:''}
+      ${c.testimonial&&c.permission!=='no'?`<div style="font-size:.82rem;font-style:italic;border-left:2px solid var(--volt);padding-left:.6rem;color:#dce3f5;margin:.4rem 0;">"${c.testimonial}"</div>`:''}
+      <div style="display:flex;gap:1rem;margin-top:.5rem;font-size:.72rem;">
+        <span style="color:${c.monitoring==='yes'?'#3dffa0':'#555'};">${c.monitoring==='yes'?'✅ On monitoring $129/mo':'○ Not on monitoring'}</span>
+        <span style="color:${c.permission==='yes'?'#3dffa0':c.permission==='anon'?'#ffaa35':'#ff3d6b'};">${c.permission==='yes'?'✅ Full permission':c.permission==='anon'?'🔒 Anonymous only':'❌ No permission yet'}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── REVENUE FORECASTER ──
+function fcCalc() {
+  const reports = parseInt(document.getElementById('fc-reports')?.value)||0;
+  const price = parseInt(document.getElementById('fc-price')?.value)||199;
+  const monitoring = parseInt(document.getElementById('fc-monitoring')?.value)||0;
+  const referrals = parseInt(document.getElementById('fc-referrals')?.value)||0;
+  const rebates = parseInt(document.getElementById('fc-rebates')?.value)||0;
+
+  document.getElementById('fc-reports-val').textContent = reports;
+  document.getElementById('fc-price-val').textContent = '$'+price;
+  document.getElementById('fc-monitoring-val').textContent = monitoring;
+  document.getElementById('fc-referrals-val').textContent = referrals;
+  document.getElementById('fc-rebates-val').textContent = rebates;
+
+  const reportRev = reports * price;
+  const monitoringRev = monitoring * 129;
+  const referralRev = referrals * 299 * 0.12;
+  const rebateRev = rebates * 1200 * 0.15;
+  const monthly = reportRev + monitoringRev + referralRev + rebateRev;
+  const annual = monthly * 12;
+
+  const el = id => document.getElementById(id);
+  if(el('fc-monthly')) el('fc-monthly').textContent = '$'+Math.round(monthly).toLocaleString();
+  if(el('fc-annual')) el('fc-annual').textContent = '$'+Math.round(annual).toLocaleString();
+
+  const milestone = monthly >= 6667 ? '🏆 Year 2 pace' : monthly >= 2083 ? '🚀 Year 1 target pace' : monthly >= 3000 ? '📈 Phase 2 target' : monthly >= 1000 ? '✅ Phase 1 target hit' : '📍 Building...';
+  if(el('fc-monthly-sub')) el('fc-monthly-sub').textContent = milestone;
+  if(el('fc-annual-sub')) el('fc-annual-sub').textContent = annual >= 80000 ? '🏆 Year 2 target hit' : annual >= 25000 ? '✅ Year 1 target hit' : '';
+
+  if(el('fc-breakdown')) el('fc-breakdown').innerHTML = [
+    reports > 0 ? `Reports:      ${reports} × $${price} = <span style="color:var(--volt)">$${reportRev.toLocaleString()}</span>` : '',
+    monitoring > 0 ? `Monitoring:   ${monitoring} × $129  = <span style="color:var(--volt)">$${monitoringRev.toLocaleString()}</span>` : '',
+    referrals > 0 ? `Referrals:    ${referrals} × $${Math.round(299*0.12)} = <span style="color:var(--volt)">$${Math.round(referralRev).toLocaleString()}</span>` : '',
+    rebates > 0 ? `Rebates:      ${rebates} × $180  = <span style="color:var(--volt)">$${Math.round(rebateRev).toLocaleString()}</span>` : '',
+    `─────────────────────────────`,
+    `Total/month: <span style="color:var(--volt);font-size:1rem;">$${Math.round(monthly).toLocaleString()}</span>`,
+    `Total/year:  <span style="color:var(--volt);font-size:1rem;">$${Math.round(annual).toLocaleString()}</span>`,
+  ].filter(Boolean).join('
+');
+}
+
+// Init new features
+document.addEventListener('DOMContentLoaded', () => {
+  rpLoad();
+  csLoad();
+  fcCalc();
+});
+</script>
+
+</body>
+</html>
