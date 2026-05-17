@@ -1732,12 +1732,27 @@ async function callClaude(prompt, outputId){
   out.classList.remove('empty');
   out.innerHTML='<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span style="margin-left:.3rem">Analyzing...</span></div>';
   try{
-    const encodedPrompt=encodeURIComponent(prompt);
-    const res=await fetch(`https://text.pollinations.ai/${encodedPrompt}`,{
-      method:'GET',
-      headers:{'Accept':'text/plain'}
-    });
-    const text=await res.text();
+   const HF_TOKEN = "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";
+const res = await fetch(
+  "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${HF_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 1000,
+        temperature: 0.7,
+        return_full_text: false
+      }
+    })
+  }
+);
+const data = await res.json();
+const text = data[0].generated_text;
     out.style.whiteSpace='pre-wrap';
     out.textContent=text;
   }catch(e){
