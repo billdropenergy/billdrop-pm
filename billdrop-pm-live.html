@@ -1731,36 +1731,16 @@ async function callClaude(prompt, outputId){
   if(!out)return;
   out.classList.remove('empty');
   out.innerHTML='<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span style="margin-left:.3rem">Analyzing...</span></div>';
- out.textContent = "AI analyzing... (first call takes 20-30 seconds while model loads)";
-    
-    let attempts = 0;
-    let data;
-    
-    while (attempts < 3) {
-      const res = await fetch('/.netlify/functions/huggingface-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt })
-      });
-      
-      data = await res.json();
-      
-      // Check if model is loading
-      if (data.loading) {
-        attempts++;
-        out.textContent = `Model waking up... attempt ${attempts}/3 (waiting 20s)`;
-        await new Promise(r => setTimeout(r, 20000));
-        continue;
-      }
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      
-      break;
-    }
-    
-    const text = data[0].generated_text;
+  try{
+    const encodedPrompt=encodeURIComponent(prompt);
+    const res=await fetch(`https://text.pollinations.ai/${encodedPrompt}`,{
+      method:'GET',
+      headers:{'Accept':'text/plain'}
+    });
+    const text=await res.text();
+    out.style.whiteSpace='pre-wrap';
+    out.textContent=text;
+  }catch(e){
     out.textContent='Error: '+e.message;
   }
 }
