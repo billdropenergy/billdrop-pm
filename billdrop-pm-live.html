@@ -1673,12 +1673,27 @@ REQUIRED TECHNIQUES TO INCORPORATE:
 - The close should always be a Rapid Assessment call booking — never a pitch to buy right away`;
 
   try {
-    const encodedPrompt2=encodeURIComponent(prompt);
-    const res = await fetch(`https://text.pollinations.ai/${encodedPrompt2}`,{
-      method:'GET',
-      headers:{'Accept':'text/plain'}
-    });
-    const text = await res.text();
+ const HF_TOKEN = "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";
+const res = await fetch(
+  "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${HF_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 1000,
+        temperature: 0.7,
+        return_full_text: false
+      }
+    })
+  }
+);
+const data = await res.json();
+const text = data[0].generated_text;
     const outEl = document.getElementById('brief-out');
     if(outEl) outEl.textContent = text;
   } catch(e) {
